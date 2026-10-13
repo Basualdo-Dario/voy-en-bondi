@@ -29,6 +29,8 @@ func open(screen: String) -> void:
 	current = screen
 	if screen != "skins":
 		preview = Game.profile["eq"]
+	if screen != "menu":
+		Audio.play("ui_open", -4.0)
 	render(true)
 
 
@@ -85,6 +87,7 @@ func render(animate := false) -> void:
 
 
 func close() -> void:
+	Audio.play("ui_close")
 	var tw := create_tween()
 	tw.tween_property(wrap, "position:y", 1400.0, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.tween_callback(func():
@@ -500,6 +503,7 @@ func tap(id: String) -> void:
 	elif id.begins_with("buy:"):
 		var item := id.substr(4)
 		if Game.buy_item(item):
+			Audio.play("buy")
 			trip.update_coins()
 			render()
 			for it in Game.ITEMS:
@@ -508,6 +512,7 @@ func tap(id: String) -> void:
 	elif id.begins_with("up:"):
 		var sk := id.substr(3)
 		if Game.upgrade_skill(sk):
+			Audio.play("buy")
 			trip.update_coins()
 			render()
 			say("¡Subiste a nivel %d! Se nota en el próximo viaje." % Game.skill_level(sk))
@@ -517,6 +522,7 @@ func tap(id: String) -> void:
 		render()
 	elif id == "buyskin":
 		if Game.buy_skin(preview):
+			Audio.play("buy")
 			trip.update_coins()
 			render()
 			say("¡Ya tenés puesta la de %s!" % Game.skin(preview)["name"])

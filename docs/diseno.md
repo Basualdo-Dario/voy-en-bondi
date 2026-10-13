@@ -200,6 +200,14 @@ El juego es 3D low-poly: personajes armados con formas simples, colores fuertes 
 Los pasajeros de relleno van con colores apagados (cada uno tiene dos variantes) para que las amenazas resalten. Siete van sentados, mezclados al azar en cada viaje, y tres parados del lado derecho, agarrados de la manija y lejos del pasillo.
 | El vendedor ambulante | Molestia: te ofrece cosas | Remera naranja, gorra roja y bandeja de golosinas colgada del cuello |
 
+## Sonido
+
+- **Efectos:** de bancos con licencia CC0 (Kenney y OpenGameArt), listados en `assets/audio/CREDITOS.md`. Cada acción importante tiene su sonido: botones, compras, frenadas (a veces con bocinazo), caídas, el aviso "!", ganar o perder un evento y el fin del viaje.
+- **Ambiente:** el motor del colectivo suena durante el viaje y baja de tono en las frenadas.
+- **Música:** cumbia chiptune en loop, generada por código. Más fuerte en el menú y más bajita en el viaje.
+- **Silenciar:** botón en el menú y en la pausa; se guarda en la partida.
+- **Pendiente:** no hay sonidos CC0 buenos de vómito, bostezo ni frenada con chirrido; por ahora se usan otros parecidos.
+
 ## Primera versión (alcance)
 
 Un día completo con lo justo para probar si el juego es divertido.

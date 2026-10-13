@@ -209,6 +209,16 @@ func _draw_icon(kind: String, c: Vector2, s: float) -> void:
 				draw_rect(Rect2(body.position + Vector2((0.14 + i * 0.4) * s, 0.12 * s), Vector2(0.3, 0.26) * s), Color("dff1fb"))
 			for x in [-0.38, 0.38]:
 				draw_circle(c + Vector2(x, 0.38) * s, 0.15 * s, ink)
+		"sound", "mute":
+			var spk := PackedVector2Array([c + Vector2(-0.6, -0.2) * s, c + Vector2(-0.3, -0.2) * s, c + Vector2(0.05, -0.55) * s,
+				c + Vector2(0.05, 0.55) * s, c + Vector2(-0.3, 0.2) * s, c + Vector2(-0.6, 0.2) * s])
+			draw_colored_polygon(spk, ink)
+			if kind == "sound":
+				draw_arc(c + Vector2(0.05, 0) * s, 0.3 * s, -PI / 3, PI / 3, 10, ink, s * 0.1, true)
+				draw_arc(c + Vector2(0.05, 0) * s, 0.55 * s, -PI / 3, PI / 3, 12, ink, s * 0.1, true)
+			else:
+				draw_line(c + Vector2(0.25, -0.25) * s, c + Vector2(0.65, 0.25) * s, Color("c2362b"), s * 0.13, true)
+				draw_line(c + Vector2(0.65, -0.25) * s, c + Vector2(0.25, 0.25) * s, Color("c2362b"), s * 0.13, true)
 		"close":
 			draw_line(c + Vector2(-0.4, -0.4) * s, c + Vector2(0.4, 0.4) * s, ink, s * 0.16, true)
 			draw_line(c + Vector2(0.4, -0.4) * s, c + Vector2(-0.4, 0.4) * s, ink, s * 0.16, true)

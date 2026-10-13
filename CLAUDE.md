@@ -24,6 +24,7 @@ Los números de economía están en `scripts/game.gd`. **Antes de cambiar reglas
 - `scripts/game.gd` (autoload `Game`): perfil, guardado en `user://save.json`, reglas y precios.
 - `scripts/world/`: `build.gd` (formas simples), `characters.gd` (personajes), `skins.gd` (texturas de camisetas).
 - `scripts/ui/touch_button.gd` y `meter.gd`: botones y barras dibujados a mano.
+- `scripts/audio.gd` (autoload `Audio`): efectos (`Audio.play("coins")`), música y motor del colectivo. Los sonidos están en `assets/audio/` con sus créditos en `CREDITOS.md`; usar solo sonidos CC0. La música se genera con `tools/make_music.gd` (`godot --headless --path . -s res://tools/make_music.gd`).
 - `scripts/ui/city_map.gd` y `route_stops.gd`: el mapa del modo historia (barrios del capítulo y paradas de la semana).
 - Modo historia: los datos (`CHAPTERS`, `BARRIOS`) y la lógica (`complete_week`, `next_story`) están en `game.gd`. El perfil guarda `barrio` (0 a 8; 8 = modo libre) y `day` (día dentro del barrio).
 

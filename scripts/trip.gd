@@ -96,6 +96,7 @@ var spin_index := -1
 var spin_x := 0.0
 var spin_pause := 0.0
 var auto_t := 0.0
+var engine_v := 1.0
 
 
 func _ready() -> void:
@@ -390,6 +391,11 @@ func _build_hud() -> void:
 	pause.icon = "pause"
 	top.add_child(pause)
 	game_nodes.append(pause)
+	# Sonido prendido/apagado (solo en el menú; en el viaje está en la pausa)
+	var snd := _tb("snd", "", Vector2(76, 76))
+	top.add_child(snd)
+	ui["snd"] = snd
+	_upd_snd()
 	var trip_p := _panel()
 	trip_p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var trip_v := VBoxContainer.new()
@@ -518,9 +524,17 @@ func _build_hud() -> void:
 	ui["modal"] = modal
 
 
+func _upd_snd() -> void:
+	ui["snd"].icon = "mute" if Audio.muted else "sound"
+	ui["snd"].queue_redraw()
+
+
 func _set_mode(mode: String) -> void:
 	for n in game_nodes:
 		n.visible = mode == "game"
+	ui["snd"].visible = mode != "game"
+	Audio.music_for_trip(mode == "game")
+	Audio.set_engine(mode == "game")
 	ui["spacer_top"].visible = mode != "game"
 	if mode == "game":
 		screens.clear()
@@ -568,6 +582,7 @@ func _show_next_story() -> void:
 		return
 	var n := int(story_key.get_slice(":", 1))
 	var ok := [["story_ok", "¡VAMOS!", 420, C_YELLOW]]
+	Audio.play("prize" if story_key.begins_with("barrio_end") else "card")
 	match story_key.get_slice(":", 0):
 		"cap_intro":
 			var ch: Dictionary = Game.CHAPTERS[n]
@@ -778,6 +793,9 @@ func _upd_bars() -> void:
 
 func add_shame(kind: String, msg: String) -> void:
 	var v := roundi(Game.SHAME[kind] * Game.shame_mult())
+	if kind == "vomito":
+		Audio.play("splat")
+	Audio.play("lose")
 	shame += v
 	_upd_bars()
 	toast("%s +%d vergüenza" % [msg, v])
@@ -790,6 +808,7 @@ func tutorial(key: String, then: Callable) -> void:
 		then.call()
 		return
 	Game.profile["tut_seen"][key] = true
+	Audio.play("card")
 	phase = "tut"
 	after_tut = then
 	show_modal("Tutorial", TUT[key][0], TUT[key][1], [], [["tutok", "¡DALE!", 420, C_YELLOW]])
@@ -826,6 +845,7 @@ func use_perfume() -> bool:
 	if items.get("perf", 0) <= 0 or perf_t > 0 or ev == null or ev["type"] != "olor":
 		return false
 	_use_item("perf")
+	Audio.play("perfume")
 	perf_t = 3.0
 	if ev.has("ctx") and is_instance_valid(ev["ctx"]):
 		ev["ctx"].badge = items["perf"]
@@ -974,6 +994,7 @@ func end_ev(win: bool) -> void:
 		w["boost"] = 1.0
 	if win:
 		ok_count += 1
+		Audio.play("win")
 	ev = null
 	last_ev_end = t
 	marker.visible = false
@@ -994,10 +1015,13 @@ func press() -> void:
 		ev["holding"] = true
 		ev["started"] = true
 		ev["act"].set_down(true)
+		Audio.play("hold")
 	elif ev["type"] == "choro":
 		ev["p"] = maxf(0.0, ev["p"] - 0.07)
+		Audio.play("tug1" if randf() < 0.5 else "tug2", 0.0, 1.0, 0.15)
 	elif ev["type"] == "sueno":
 		ev["v"] = minf(1.0, ev["v"] + 0.08)
+		Audio.play("tap", 0.0, 0.8 + ev["v"] * 0.5, 0.0)
 
 
 func release() -> void:
@@ -1013,6 +1037,7 @@ func release() -> void:
 		var z: Dictionary = ev["zone"]
 		if used >= z["a"] and used <= z["a"] + z["w"]:
 			ev["breathing"] = true
+			Audio.play("breath")
 			toast("Respirando en la zona verde…")
 		else:
 			end_ev(false)
@@ -1048,6 +1073,7 @@ func _vend_offer() -> void:
 	_clear(box)
 	box.visible = true
 	vend["ot"] = 0.0
+	Audio.play("offer", 0.0, 1.0 + vend["n"] * 0.12)
 	var txt: String = LAST_OFFER if vend["n"] == 2 else OFFERS[(vend["n"] + int(t)) % OFFERS.size()]
 	var card := _panel(Color.WHITE)
 	card.custom_minimum_size = Vector2(330, 0)
@@ -1085,6 +1111,7 @@ func end_vend(win: bool) -> void:
 		w["boost"] = 1.0
 	if win:
 		ok_count += 1
+		Audio.play("win")
 	vend = null
 	last_ev_end = t
 	_clear(ui["vend"])
@@ -1101,10 +1128,14 @@ func start_tilt() -> void:
 		var amp := 1.35 * Game.strength_mult() * (1.45 if ceded else 1.0) * (0.65 if ev != null else 1.0) * first_day_soft
 		tilt = {"t": 0.0, "dur": 3.2, "dir": dir, "amp": amp}
 		seen["tilt"] = true
+		Audio.play("jolt")
+		if randf() < 0.35:
+			Audio.play("horn")
 		toast("¡Curva! Te vas a la derecha" if dir > 0 else "¡Frenada! Te vas a la izquierda"))
 
 
 func fall(dir: float) -> void:
+	Audio.play("fall")
 	fall_t = 1.4
 	fall_dir = dir
 	tilt = null
@@ -1168,6 +1199,8 @@ func end_trip() -> void:
 		p["trip"] += 1
 	Game.save()
 	update_coins()
+	Audio.play("trip_fail" if failed else "trip_ok")
+	Audio.play("coins", -3.0)
 	if autotest:
 		print("FIN DEL VIAJE: fallado=%s puntaje=%d eventos=%d" % [failed, score, ok_count])
 		print("  barrio=%d día=%d viaje=%d monedas=%d historia=%s" % [p["barrio"], p["day"], p["trip"], p["coins"], p["story_queue"]])
@@ -1245,6 +1278,9 @@ func _touch_down(index: int, pos: Vector2) -> void:
 			hold_index = index
 			press()
 		_:
+			# En el menú y en los carteles todo botón hace "clic"; en el viaje cada uno tiene su sonido
+			if phase != "play":
+				Audio.play("ui_click")
 			_tap(tb.id)
 
 
@@ -1264,11 +1300,24 @@ func _touch_up(index: int) -> void:
 		spin_index = -1
 
 
+func _show_pause() -> void:
+	show_modal("Pausa", "Viaje en pausa", "", [], [["resume", "SEGUIR", 420, C_YELLOW], ["snd", "", 110, Color("eef1f5"), "mute" if Audio.muted else "sound"]])
+
+
 func _tap(id: String) -> void:
 	match id:
 		"start":
 			hide_modal()
 			phase = "play"
+			Audio.play("door")
+			Audio.play("start", -2.0)
+		"snd":
+			Audio.set_muted(not Audio.muted)
+			Game.save()
+			_upd_snd()
+			if phase == "pause":
+				_show_pause()
+			return
 		"tutok":
 			hide_modal()
 			phase = "play"
@@ -1279,7 +1328,8 @@ func _tap(id: String) -> void:
 		"pause":
 			if phase == "play":
 				phase = "pause"
-				show_modal("Pausa", "Viaje en pausa", "", [], [["resume", "SEGUIR", 420, C_YELLOW]])
+				Audio.play("ui_click")
+				_show_pause()
 		"resume":
 			hide_modal()
 			phase = "play"
@@ -1318,12 +1368,14 @@ func _tap(id: String) -> void:
 		"item:cafe":
 			if items.get("cafe", 0) > 0 and ev != null and ev["type"] == "sueno":
 				_use_item("cafe")
+				Audio.play("cafe")
 				cafe_t = 20.0
 				toast("¡Con el café te despertaste al toque!")
 				end_ev(true)
 		"item:lock":
 			if items.get("lock", 0) > 0 and ev != null and ev["type"] == "choro":
 				_use_item("lock")
+				Audio.play("lock")
 				lock_t = 6.0
 				toast("Candado puesto: el choro se fue con las manos vacías")
 				end_ev(true)
@@ -1332,12 +1384,14 @@ func _tap(id: String) -> void:
 		"item:bill":
 			if items.get("bill", 0) > 0 and vend != null:
 				_use_item("bill")
+				Audio.play("bill")
 				Game.profile["coins"] = maxi(0, Game.profile["coins"] - 5)
 				update_coins()
 				toast("Le compraste un caramelo y se fue")
 				end_vend(true)
 		"nogracias":
 			if vend != null:
+				Audio.play("nogracias")
 				vend["n"] += 1
 				if vend["n"] >= 3:
 					toast("¡Se rindió! Siguió con otro")
@@ -1391,6 +1445,8 @@ func _step(dt: float) -> void:
 	if ev == null:
 		var nexts := walkers.filter(func(w): return vend == null and not w["parked"] and w["state"] == "walk" and w["dir"] > 0 and w["cool"] <= 0 and w["z"] < TRIG_Z and TRIG_Z - w["z"] < 2.2)
 		nexts.sort_custom(func(a, c): return a["z"] > c["z"])
+		if nexts.size() > 0 and not marker.visible:
+			Audio.play("alert", -4.0)
 		marker.visible = nexts.size() > 0
 		if nexts.size() > 0:
 			var r: Node3D = nexts[0]["d"]["root"]
@@ -1413,6 +1469,8 @@ func _step(dt: float) -> void:
 			robbed += lost
 			update_coins()
 			end_vend(false)
+			Audio.play("coins_lost")
+			Audio.play("lose")
 			toast("Te enchufó unas medias: −20 monedas")
 
 	if ev != null:
@@ -1537,6 +1595,7 @@ func _step_event(dt: float) -> void:
 				robbed += lost
 				update_coins()
 				end_ev(false)
+				Audio.play("coins_lost")
 				add_shame("robo", "Te robaron 30 monedas.")
 		"eleccion":
 			var left2: float = ev["limit"] - ev["t"]
@@ -1718,6 +1777,9 @@ func _animate_ambient(dt: float, now: float) -> void:
 
 	# La ciudad pasa por la ventana
 	var speed := 3.0 if phase != "play" else (2.0 if tilt != null else 7.0)
+	# El motor sigue a la velocidad del colectivo: en las frenadas baja de tono
+	engine_v = lerpf(engine_v, speed / 7.0, minf(1.0, dt * 2.0))
+	Audio.engine_speed(engine_v)
 	for g in outside:
 		g.position.z += speed * dt
 		if g.position.z > 12:

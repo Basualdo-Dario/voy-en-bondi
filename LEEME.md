@@ -61,6 +61,9 @@ scripts/ui/coin.gd           la moneda dibujada
 scripts/ui/city_map.gd       el mapa de la ciudad (modo historia)
 scripts/ui/route_stops.gd    las paradas de la semana de cada barrio
 assets/fonts/            la letra Fredoka (licencia libre OFL)
+assets/audio/            efectos de sonido (CC0, ver CREDITOS.md) y la música
+scripts/audio.gd         el sonido: efectos, música y motor (autoload "Audio")
+tools/make_music.gd      genera la música de cumbia
 docs/diseno.md           el documento de diseño completo
 CLAUDE.md                contexto para seguir trabajando con Claude Code
 ```
