@@ -24,6 +24,8 @@ Los números de economía están en `scripts/game.gd`. **Antes de cambiar reglas
 - `scripts/game.gd` (autoload `Game`): perfil, guardado en `user://save.json`, reglas y precios.
 - `scripts/world/`: `build.gd` (formas simples), `characters.gd` (personajes), `skins.gd` (texturas de camisetas).
 - `scripts/ui/touch_button.gd` y `meter.gd`: botones y barras dibujados a mano.
+- `scripts/ui/city_map.gd` y `route_stops.gd`: el mapa del modo historia (barrios del capítulo y paradas de la semana).
+- Modo historia: los datos (`CHAPTERS`, `BARRIOS`) y la lógica (`complete_week`, `next_story`) están en `game.gd`. El perfil guarda `barrio` (0 a 8; 8 = modo libre) y `day` (día dentro del barrio).
 
 ## Convenciones importantes
 
@@ -45,6 +47,9 @@ godot --headless --path . --fixed-fps 60 --quit-after 6000 -- --autotest
 
 # Captura de una pantalla del menú (necesita pantalla virtual, por ejemplo xvfb-run)
 godot --path . --rendering-driver opengl3 --resolution 405x855 -- --demo --tap=go:skins,pick:ramal --shot=captura.png
+
+# Probar un momento de la historia: --set pone números en la partida de prueba (ej.: fin del capítulo 1)
+godot --headless --path . --fixed-fps 60 --quit-after 6000 -- --autotest --set=barrio:3,day:4,trip:3
 
 # Captura en medio de un viaje (a los 10 segundos)
 godot --path . --rendering-driver opengl3 --resolution 405x855 -- --autotest --shot=captura.png --shot-time=10

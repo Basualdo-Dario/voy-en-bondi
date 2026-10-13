@@ -58,6 +58,8 @@ scripts/world/characters.gd  los personajes
 scripts/ui/touch_button.gd   botones que aceptan varios dedos a la vez
 scripts/ui/meter.gd          las barras (vergüenza, aire, forcejeo, equilibrio...)
 scripts/ui/coin.gd           la moneda dibujada
+scripts/ui/city_map.gd       el mapa de la ciudad (modo historia)
+scripts/ui/route_stops.gd    las paradas de la semana de cada barrio
 assets/fonts/            la letra Fredoka (licencia libre OFL)
 docs/diseno.md           el documento de diseño completo
 CLAUDE.md                contexto para seguir trabajando con Claude Code

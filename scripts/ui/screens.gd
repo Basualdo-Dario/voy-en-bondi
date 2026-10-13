@@ -12,6 +12,9 @@ var trip: Trip            # el nodo del viaje (trip.gd): usamos sus ayudantes de
 var current := "menu"
 var preview := "buzo"    # camiseta que se está probando
 var from_start := false  # si la tienda se abrió desde el cartel de ¡ARRANCAR!
+var map_chapter := 0     # capítulo que se ve en el mapa
+var map_barrio := 0      # barrio elegido en el mapa (se ve su recorrido)
+var skins_tab := "clubes"  # "clubes" (se compran) o "premios" (se ganan en los barrios)
 var wrap: Control
 var msg: Label
 
@@ -73,6 +76,8 @@ func render(animate := false) -> void:
 			_skills(v)
 		"skins":
 			_skins(v)
+		"mapa":
+			_map(v)
 	if animate:
 		wrap.position.y = 1400
 		var tw := create_tween()
@@ -146,6 +151,14 @@ func _msg(v: VBoxContainer, text := "") -> void:
 
 func _menu(v: VBoxContainer) -> void:
 	var p := Game.profile
+	var br := Game.barrio()
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 10)
+	top.add_child(_line_chip(br))
+	var where := trip._label(("Modo libre" if Game.story_done() else br["name"]), 22, C_MUTED)
+	where.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(where)
+	v.add_child(top)
 	var head := HBoxContainer.new()
 	var day := trip._label(Game.day_name(), 34)
 	day.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -197,14 +210,103 @@ func _menu(v: VBoxContainer) -> void:
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
-	for it in [["go:tienda", "Tienda", "shop"], ["go:habilidades", "Habilidades", "bars"], ["go:skins", "Camisetas", "shirt"]]:
-		var b: TouchButton = trip._tb(it[0], it[1], Vector2(180, 128), Color("eef1f5"))
+	for it in [["go:mapa", "Mapa", "map"], ["go:tienda", "Tienda", "shop"], ["go:habilidades", "Habilidades", "bars"], ["go:skins", "Camisetas", "shirt"]]:
+		var b: TouchButton = trip._tb(it[0], it[1], Vector2(130, 128), Color("eef1f5"))
 		b.icon = it[2]
-		b.font_size = 24
+		b.font_size = 21
 		b.shadow = Color(0, 0, 0, 0)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(b)
 	v.add_child(row)
+	_msg(v)
+
+
+## Chapita con el número de la línea, en su color
+func _line_chip(br: Dictionary) -> PanelContainer:
+	var c := Color(br["color"])
+	var chip: PanelContainer = trip._panel(c, 999)
+	var fg := C_INK if c.get_luminance() > 0.55 else Color.WHITE
+	var l: Label = trip._label("LÍNEA %s" % br["line"], 20, fg, HORIZONTAL_ALIGNMENT_CENTER)
+	l.add_theme_font_override("font", Game.font_bold)
+	chip.add_child(l)
+	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return chip
+
+
+## Estado de un barrio en el mapa: "done", "current" o "locked"
+func _barrio_state(i: int) -> String:
+	var reached := int(Game.profile["barrio"])
+	if i < reached:
+		return "done"
+	return "current" if i == reached else "locked"
+
+
+func _map(v: VBoxContainer) -> void:
+	_handle(v)
+	# Pestañas de capítulos (los que todavía no llegaste quedan bloqueados)
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 10)
+	for c in Game.CHAPTERS.size():
+		var sel := c == map_chapter
+		var t: TouchButton = trip._tb("chap:%d" % c, "Cap. %d · %s" % [c + 1, Game.CHAPTERS[c]["title"]], Vector2(120, 66), C_YELLOW if sel else Color("eef1f5"))
+		t.font_size = 21
+		t.radius = 999
+		t.shadow = Color("b58600") if sel else Color(0, 0, 0, 0)
+		t.disabled = c > Game.chapter_index(int(Game.profile["barrio"]) if not Game.story_done() else Game.BARRIOS.size() - 1)
+		t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tabs.add_child(t)
+	v.add_child(tabs)
+
+	# Meta del capítulo y cuánto falta
+	var ch: Dictionary = Game.CHAPTERS[map_chapter]
+	var done := Game.chapter_progress(map_chapter)
+	var meta := HBoxContainer.new()
+	var ml: Label = trip._label("Meta: %s" % ch["goal"].to_lower(), 22)
+	ml.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	ml.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	meta.add_child(ml)
+	meta.add_child(trip._label("%d de %d" % [done, Game.BARRIOS_PER_CHAPTER], 22, Color("2e7d32")))
+	v.add_child(meta)
+	var pm := Meter.new(16)
+	pm.fill_color = Color("3fae5a")
+	pm.fill = float(done) / Game.BARRIOS_PER_CHAPTER
+	v.add_child(pm)
+
+	# La ciudad: los 4 barrios del capítulo
+	var city := CityMap.new()
+	var first := map_chapter * Game.BARRIOS_PER_CHAPTER
+	city.line_color = Color(Game.BARRIOS[clampi(map_barrio, first, first + 3)]["color"])
+	for i in range(first, first + Game.BARRIOS_PER_CHAPTER):
+		var br: Dictionary = Game.BARRIOS[i]
+		var st := _barrio_state(i)
+		var label: String = {"done": "Terminado", "current": "Estás acá", "locked": "Bloqueado"}[st]
+		var tile: TouchButton = trip._tb("barrio:%d" % i, "%s\nLínea %s · %s" % [br["name"], br["line"], label], Vector2(200, 150), Color("eef1f5") if st == "locked" else Color(br["color"]).lightened(0.55))
+		tile.icon = {"done": "check", "current": "bus", "locked": "lock"}[st]
+		tile.font_size = 19
+		tile.shadow = Color(0, 0, 0, 0) if st == "locked" else Color(br["color"]).darkened(0.1)
+		tile.selected = i == map_barrio
+		tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tile.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		city.grid.add_child(tile)
+	v.add_child(city)
+
+	# Recorrido de la semana del barrio elegido
+	var sb: Dictionary = Game.BARRIOS[map_barrio]
+	var rh := HBoxContainer.new()
+	rh.add_theme_constant_override("separation", 10)
+	rh.add_child(_line_chip(sb))
+	var rl: Label = trip._label("Recorrido de %s" % sb["name"], 22)
+	rh.add_child(rl)
+	v.add_child(rh)
+	var stops := RouteStops.new()
+	stops.color = Color(sb["color"])
+	match _barrio_state(map_barrio):
+		"done":
+			stops.done = 5
+		"current":
+			stops.done = int(Game.profile["day"])
+			stops.current = int(Game.profile["day"])
+	v.add_child(stops)
 	_msg(v)
 
 
@@ -303,21 +405,39 @@ func _skins(v: VBoxContainer) -> void:
 	elif p["owned"].get(preview, false):
 		action = trip._tb("equip", "Ponérmela", Vector2(220, 80), C_YELLOW)
 		action.shadow = Color("b58600")
+	elif sel.has("prize"):
+		# Las de premio no se compran: se ganan terminando su barrio
+		action = trip._tb("noop", "Premio del barrio %d" % (int(sel["prize"]) + 1), Vector2(250, 80), C_YELLOW)
+		action.disabled = true
 	else:
 		action = trip._tb("buyskin", "Comprar ● %d" % sel["price"], Vector2(250, 80), C_YELLOW)
 		action.shadow = Color("b58600")
 		action.disabled = p["coins"] < sel["price"]
 	action.radius = 999
-	action.font_size = 26
+	action.font_size = 22 if sel.has("prize") and not p["owned"].get(preview, false) else 26
 	action.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(action)
 	v.add_child(head)
+
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 10)
+	for t in [["clubes", "Clubes"], ["premios", "Premios de barrio"]]:
+		var on: bool = skins_tab == t[0]
+		var tb: TouchButton = trip._tb("tab:" + t[0], t[1], Vector2(120, 60), C_YELLOW if on else Color("eef1f5"))
+		tb.font_size = 22
+		tb.radius = 999
+		tb.shadow = Color("b58600") if on else Color(0, 0, 0, 0)
+		tb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tabs.add_child(tb)
+	v.add_child(tabs)
 
 	var grid := GridContainer.new()
 	grid.columns = 3
 	grid.add_theme_constant_override("h_separation", 12)
 	grid.add_theme_constant_override("v_separation", 12)
 	for s in Game.SKINS:
+		if s.has("prize") != (skins_tab == "premios"):
+			continue
 		var id: String = s["id"]
 		var name_lines: String = s["name"]
 		var parts: PackedStringArray = name_lines.split(" ")
@@ -328,6 +448,8 @@ func _skins(v: VBoxContainer) -> void:
 		var tag := ""
 		if p["owned"].get(id, false):
 			tag = "Puesta" if p["eq"] == id else "Tuya"
+		elif s.has("prize"):
+			tag = "Barrio %d" % (int(s["prize"]) + 1)
 		else:
 			tag = "● %d" % s["price"]
 		var b: TouchButton = trip._tb("pick:" + id, name_lines + "\n" + tag, Vector2(196, 168), C_SOFT)
@@ -354,7 +476,27 @@ func tap(id: String) -> void:
 		current = id.substr(3)
 		if current != "skins":
 			preview = p["eq"]
+		if current == "skins":
+			skins_tab = "premios" if Game.skin(p["eq"]).has("prize") else "clubes"
+		if current == "mapa":
+			map_chapter = Game.chapter_index()
+			map_barrio = Game.barrio_index()
 		trip.go_menu(current)
+	elif id.begins_with("chap:"):
+		map_chapter = int(id.substr(5))
+		map_barrio = Game.barrio_index() if Game.chapter_index() == map_chapter else map_chapter * Game.BARRIOS_PER_CHAPTER
+		render()
+	elif id.begins_with("barrio:"):
+		var i := int(id.substr(7))
+		if _barrio_state(i) == "locked":
+			say("Se desbloquea cuando termines %s." % Game.BARRIOS[i - 1]["name"])
+		else:
+			map_barrio = i
+			render()
+			say(Game.BARRIOS[i]["intro"])
+	elif id.begins_with("tab:"):
+		skins_tab = id.substr(4)
+		render()
 	elif id.begins_with("buy:"):
 		var item := id.substr(4)
 		if Game.buy_item(item):

@@ -43,6 +43,13 @@ var stink_parts: Array = []
 var fly_parts: Array = []
 var shirt_mat := StandardMaterial3D.new()
 var sleeve_mat := StandardMaterial3D.new()
+# Cada barrio tiene su línea: el colectivo, el cartel y el cielo cambian (ver apply_line)
+var bus_mat := StandardMaterial3D.new()
+var bus_dark_mat := StandardMaterial3D.new()
+var sign: Label3D
+var env: Environment
+var sun: DirectionalLight3D
+var inside: OmniLight3D
 
 # ---------- Interfaz ----------
 var ui := {}
@@ -108,7 +115,7 @@ func _ready() -> void:
 # =====================================================================
 
 func _build_world() -> void:
-	var env := Environment.new()
+	env = Environment.new()
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = Color("9fd3f0")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
@@ -118,11 +125,11 @@ func _build_world() -> void:
 	we.environment = env
 	add_child(we)
 
-	var sun := DirectionalLight3D.new()
+	sun = DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-55, 35, 0)
 	sun.light_energy = 0.9
 	add_child(sun)
-	var inside := OmniLight3D.new()
+	inside = OmniLight3D.new()
 	inside.position = Vector3(0, 2.4, -3)
 	inside.omni_range = 14
 	inside.light_energy = 0.6
@@ -151,14 +158,14 @@ func _build_world() -> void:
 	Build.box(bus, Vector3(w, .1, length), Color("e9edf1"), Vector3(0, h, zc))
 	var glass := Color(0.81, 0.92, 0.97, 0.18)
 	for s in [-1, 1]:
-		Build.box(bus, Vector3(.1, 1.05, length), C_YELLOW, Vector3(s * w / 2, .52, zc))
-		Build.box(bus, Vector3(.1, .5, length), C_YELLOW, Vector3(s * w / 2, 2.45, zc))
+		Build.box(bus, Vector3(.1, 1.05, length), bus_mat, Vector3(s * w / 2, .52, zc))
+		Build.box(bus, Vector3(.1, .5, length), bus_mat, Vector3(s * w / 2, 2.45, zc))
 		Build.box(bus, Vector3(.04, 1.15, length), glass, Vector3(s * w / 2, 1.62, zc))
 		var zp := z0
 		while zp <= z1:
-			Build.box(bus, Vector3(.12, 1.2, .1), Color("d9a400"), Vector3(s * w / 2, 1.62, zp))
+			Build.box(bus, Vector3(.12, 1.2, .1), bus_dark_mat, Vector3(s * w / 2, 1.62, zp))
 			zp += 1.6
-		var rail := Build.cyl(bus, .035, .035, length, C_YELLOW, Vector3(s * .55, 2.38, zc), 8)
+		var rail := Build.cyl(bus, .035, .035, length, bus_mat, Vector3(s * .55, 2.38, zc), 8)
 		rail.rotation.x = PI / 2
 		var zh := z0 + 1.2
 		while zh < z1:
@@ -176,7 +183,7 @@ func _build_world() -> void:
 	Build.box(bus, Vector3(w, 1.3, .05), Color(0.81, 0.92, 0.97, 0.25), Vector3(0, 1.6, z0))
 	Build.box(bus, Vector3(w, .9, .1), Color("2b313b"), Vector3(0, .45, z0))
 	Build.box(bus, Vector3(w, .45, .1), Color("2b313b"), Vector3(0, 2.45, z0))
-	var sign := Build.label(bus, "LÍNEA 42", 64, Color("ffb020"), Vector3(0, 2.45, z0 + .07))
+	sign = Build.label(bus, "LÍNEA 42", 64, Color("ffb020"), Vector3(0, 2.45, z0 + .07))
 	sign.outline_size = 0
 	# Chofer
 	var drv := Node3D.new()
@@ -187,7 +194,7 @@ func _build_world() -> void:
 	drv.position = Vector3(-1.05, 0, z0 + 1.0)
 	drv.scale = Vector3.ONE * .8
 	for zz in [-9.5, -6.5, -3.5]:
-		Build.cyl(bus, .035, .035, h, C_YELLOW, Vector3(.62, h / 2, zz), 8)
+		Build.cyl(bus, .035, .035, h, bus_mat, Vector3(.62, h / 2, zz), 8)
 	for zz in [-9.8, -8.3, -6.8, -5.3, -3.8, -2.3, -.8, .7]:
 		_seat(bus, -1.12, zz)
 	for zz in [-9.8, -8.3, -6.8, -5.3]:
@@ -248,6 +255,22 @@ func _build_world() -> void:
 	marker.pixel_size = 0.004
 	marker.visible = false
 	add_child(marker)
+
+
+## Pinta el colectivo con el color de la línea del barrio y pone el cielo (de día o de noche)
+func apply_line() -> void:
+	var br := Game.barrio()
+	var c := Color(br["color"])
+	bus_mat.albedo_color = c
+	bus_mat.roughness = 0.85
+	bus_dark_mat.albedo_color = c.darkened(0.15)
+	bus_dark_mat.roughness = 0.85
+	sign.text = "LÍNEA %s" % br["line"]
+	var night: bool = br["night"]
+	env.background_color = Color(br["sky"])
+	env.ambient_light_energy = 0.5 if night else 0.75
+	sun.light_energy = 0.25 if night else 0.9
+	inside.light_energy = 1.1 if night else 0.6
 
 
 func _passenger(kind: String, v: int) -> Dictionary:
@@ -525,8 +548,44 @@ func go_menu(screen := "menu") -> void:
 	fall_t = 0.0
 	spin = 0.0
 	update_coins()
+	apply_line()
 	screens.open(screen)
 	show_skin(screens.preview)
+	if screen == "menu":
+		_show_next_story()
+
+
+# ---------- Carteles de historia ----------
+
+var story_key := ""
+
+
+## Muestra el próximo cartel de historia pendiente (intro de capítulo o barrio, finales), si hay
+func _show_next_story() -> void:
+	story_key = Game.next_story()
+	if story_key == "":
+		hide_modal()
+		return
+	var n := int(story_key.get_slice(":", 1))
+	var ok := [["story_ok", "¡VAMOS!", 420, C_YELLOW]]
+	match story_key.get_slice(":", 0):
+		"cap_intro":
+			var ch: Dictionary = Game.CHAPTERS[n]
+			show_modal("Capítulo %d" % (n + 1), ch["title"], "%s\n\nMeta: %s." % [ch["intro"], ch["goal"].to_lower()], [], ok)
+		"barrio_intro":
+			var br: Dictionary = Game.BARRIOS[n]
+			show_modal("Semana nueva · Línea %s" % br["line"], br["name"], br["intro"], [], ok)
+		"barrio_end":
+			var br2: Dictionary = Game.BARRIOS[n]
+			var ch2 := Game.chapter_index(n)
+			var done := Game.chapter_progress(ch2)
+			show_modal("Barrio terminado", "¡Chau, %s!" % br2["name"], "Te ganaste la camiseta %s. Ya la tenés en Camisetas." % Game.skin(br2["prize"])["name"],
+				[["Meta: %s" % Game.CHAPTERS[ch2]["title"].to_lower(), "%d de %d barrios" % [done, Game.BARRIOS_PER_CHAPTER]]], [["story_ok", "SEGUIR", 420, C_YELLOW]])
+		"cap_end":
+			var ch3: Dictionary = Game.CHAPTERS[n]
+			show_modal("Fin del capítulo %d" % (n + 1), ch3["end_title"], ch3["end"], [], [["story_ok", "JAJA, SEGUIR", 420, C_YELLOW]])
+		"libre":
+			show_modal("Modo libre", "¿Y ahora?", Game.LIBRE_TEXT, [], [["story_ok", "SEGUIR VIAJANDO", 460, C_YELLOW]])
 
 
 func show_skin(id: String) -> void:
@@ -590,7 +649,10 @@ func show_modal(kicker: String, title: String, body: String, rows: Array, button
 		close_row.add_child(x)
 		v.add_child(close_row)
 	v.add_child(_label(kicker.to_upper(), 20, Color("5b6573"), HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(_label(title, 52, C_INK, HORIZONTAL_ALIGNMENT_CENTER))
+	var tl := _label(title, 52, C_INK, HORIZONTAL_ALIGNMENT_CENTER)
+	tl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tl.custom_minimum_size = Vector2(540, 0)
+	v.add_child(tl)
 	if body != "":
 		var bl := _label(body, 26, C_INK, HORIZONTAL_ALIGNMENT_CENTER)
 		bl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -634,7 +696,7 @@ func modal_open() -> bool:
 func reset_trip() -> void:
 	var p := Game.profile
 	var tr: Dictionary = Game.TRIPS[p["trip"]]
-	ui["trip_k"].text = ("%s · Viaje %d de 4" % [Game.day_name(), p["trip"] + 1]).to_upper()
+	ui["trip_k"].text = ("Línea %s · %s · Viaje %d de 4" % [Game.barrio()["line"], Game.day_name(), p["trip"] + 1]).to_upper()
 	ui["trip"].text = "%s → %s" % [tr["from"], tr["to"]]
 	phase = "start"
 	t = 0.0
@@ -666,6 +728,7 @@ func reset_trip() -> void:
 	ui["vend"].visible = false
 	marker.visible = false
 	_shuffle_seats()
+	apply_line()
 	# Orden de llegada de los personajes al azar
 	var order := walkers.duplicate()
 	order.shuffle()
@@ -687,7 +750,7 @@ func reset_trip() -> void:
 	Skins.apply(p["eq"], shirt_mat, sleeve_mat)
 	_upd_bars()
 	update_coins()
-	var body := "Llegá sin pasar vergüenza. Los personajes van y vienen por el pasillo: cuando pasan cerca tuyo, arranca su evento." if (p["trip"] == 0 and p["day"] == 0) else ""
+	var body := "Llegá sin pasar vergüenza. Los personajes van y vienen por el pasillo: cuando pasan cerca tuyo, arranca su evento." if (p["trip"] == 0 and Game.first_day()) else ""
 	show_modal("%s · Viaje %d de 4" % [Game.day_name(), p["trip"] + 1], "%s → %s" % [tr["from"], tr["to"]], body, [], [["start", "¡ARRANCAR!", 420, C_YELLOW], ["shopfirst", "Tienda", 130, Color("eef1f5"), "shop"]], true)
 	if autotest:
 		hide_modal()
@@ -1034,7 +1097,7 @@ func start_tilt() -> void:
 	tutorial("tilt", func():
 		var dir := -1.0 if randf() < 0.5 else 1.0
 		var p := Game.profile
-		var first_day_soft := (0.7 if p["trip"] == 0 else 0.85) if p["day"] == 0 else 1.0
+		var first_day_soft := (0.7 if p["trip"] == 0 else 0.85) if Game.first_day() else 1.0
 		var amp := 1.35 * Game.strength_mult() * (1.45 if ceded else 1.0) * (0.65 if ev != null else 1.0) * first_day_soft
 		tilt = {"t": 0.0, "dur": 3.2, "dir": dir, "amp": amp}
 		seen["tilt"] = true
@@ -1094,13 +1157,22 @@ func end_trip() -> void:
 		p["trip"] = 0
 		p["results"] = []
 		p["used"] = {"cafe": 0, "lock": 0, "perf": 0, "bill": 0}
-		body = "Mañana es %s: todo se pone un poco más difícil." % Game.day_name().to_lower()
+		if p["day"] >= 5:
+			# Se terminó la semana: premio del barrio y al siguiente (los carteles de historia salen en el menú)
+			p["day"] = 0
+			rows.append_array(Game.complete_week())
+			body = "¡Semana terminada!" if Game.story_done() else "La semana que viene: %s, Línea %s." % [Game.barrio()["name"], Game.barrio()["line"]]
+		else:
+			body = "Mañana es %s: todo se pone un poco más difícil." % Game.day_name().to_lower()
 	else:
 		p["trip"] += 1
 	Game.save()
 	update_coins()
 	if autotest:
 		print("FIN DEL VIAJE: fallado=%s puntaje=%d eventos=%d" % [failed, score, ok_count])
+		print("  barrio=%d día=%d viaje=%d monedas=%d historia=%s" % [p["barrio"], p["day"], p["trip"], p["coins"], p["story_queue"]])
+		for r in rows:
+			print("  %s: %s" % r)
 		get_tree().quit()
 		return
 	show_modal("Viaje fallado" if failed else "¡Llegaste!", "Qué vergüenza" if failed else "%s → %s" % [tr["from"], tr["to"]], body, rows, [["tomenu", "VOLVER AL MENÚ", 460, C_YELLOW]])
@@ -1213,6 +1285,10 @@ func _tap(id: String) -> void:
 			phase = "play"
 		"close", "tomenu":
 			go_menu("menu")
+		"story_ok":
+			Game.mark_story(story_key)
+			_show_next_story()
+			return
 		"shopfirst":
 			screens.from_start = true
 			go_menu("tienda")
@@ -1525,7 +1601,7 @@ func _step_balance(dt: float) -> void:
 				if phase != "play":
 					return
 	# El colectivo se mueve todo el tiempo: siempre hay que corregir un poco
-	var ramp := minf(1.0, 0.35 + t / 45.0) if Game.profile["day"] == 0 else 1.0
+	var ramp := minf(1.0, 0.35 + t / 45.0) if Game.first_day() else 1.0
 	var sway := (sin(t * 0.9) * 0.55 + sin(t * 2.3 + 1.0) * 0.3) * (0.5 if ev != null else 1.0) * (1.3 if ceded else 1.0) * ramp
 	var ctrl := float(ctrl_key) if ctrl_key != 0 else (float(ctrl_arrow) if ctrl_arrow != 0 else (ctrl_drag if absf(ctrl_drag) > 0.01 else _sensor_ctrl()))
 	if autotest:

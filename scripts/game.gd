@@ -20,6 +20,48 @@ const TRIPS := [
 
 const DAYS := ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]
 
+# ---------- Modo historia: capítulos y barrios ----------
+# Cada barrio es una semana (5 días) con su línea de colectivo. Al terminarlo te llevás su camiseta y monedas.
+const BARRIO_COINS := 200
+const CHAPTER_COINS := 500
+
+const CHAPTERS := [
+	{
+		"title": "La moto", "goal": "Juntar para la moto y dejar el bondi",
+		"intro": "Estás harto del bondi: apretado, con olor a gym y el choro de siempre. Decidiste juntar para una moto. Cuatro barrios, cuatro semanas de viaje… y chau colectivo.",
+		"end_title": "¡La moto!",
+		"end": "Te la compraste: roja, brillante, tuya. Primer día: arranca, hace dos cuadras, tose y se apaga para siempre. El mecánico dice que el arreglo sale más que la moto. Volvés a la parada y el chofer te saluda: \"Te extrañábamos\".",
+	},
+	{
+		"title": "Mudarse cerca", "goal": "Mudarte cerca del laburo para no viajar más",
+		"intro": "Plan B: si no podés esquivar el bondi, acercate al laburo. Hay que juntar para el depósito, el mes adelantado y la comisión de la inmobiliaria. Sí, todo eso.",
+		"end_title": "¡Te mudaste!",
+		"end": "Depto nuevo a diez cuadras del laburo. El primer lunes te llega un mail: \"Por reestructuración, te trasladamos a la sede de la otra punta de la ciudad\". Dos colectivos de ida y dos de vuelta. El bondi siempre gana.",
+	},
+]
+
+## "night" cambia el cielo y las luces. "prize" es la camiseta que ganás al terminar el barrio.
+const BARRIOS := [
+	{"name": "Villa Parada", "line": "42", "color": "f2b705", "sky": "9fd3f0", "night": false, "prize": "p_parada",
+		"intro": "Tu barrio de toda la vida. La 42 pasa cuando quiere, pero pasa. Arrancamos tranqui."},
+	{"name": "Barrio Ramal", "line": "17", "color": "3fae5a", "sky": "a8dcc8", "night": false, "prize": "p_ramal",
+		"intro": "Te cambiaron el turno y ahora tomás la 17. Viene un poco más llena y el chofer frena como si le debieran plata."},
+	{"name": "El Centro", "line": "101", "color": "d64541", "sky": "c9d6e3", "night": false, "prize": "p_centro",
+		"intro": "Hora pico en el Centro. La 101 viene tan llena que el chofer cobra por centímetro."},
+	{"name": "La Costanera", "line": "5", "color": "4fb3e8", "sky": "1d2b4f", "night": true, "prize": "p_costa",
+		"intro": "Última semana antes de la moto. La 5 de noche por la Costanera: lindo paisaje, viaje largo."},
+	{"name": "Villa Trasbordo", "line": "33", "color": "f28c28", "sky": "f6d9a8", "night": false, "prize": "p_trasb",
+		"intro": "Para ver departamentos tenés que combinar dos colectivos. Bienvenido a Villa Trasbordo."},
+	{"name": "Barrio Terminal", "line": "88", "color": "9b2c4a", "sky": "b9c7d6", "night": false, "prize": "p_term",
+		"intro": "Acá terminan todas las líneas. Y todos los pasajeros también, parece."},
+	{"name": "Las Torres", "line": "214", "color": "7e57c2", "sky": "d6c9ef", "night": false, "prize": "p_torres",
+		"intro": "El depto ideal queda en Las Torres, a diez cuadras del laburo. Ya casi."},
+	{"name": "Barrio Nuevo", "line": "9", "color": "e0457b", "sky": "2a2440", "night": true, "prize": "p_nuevo",
+		"intro": "Semana de mudanza. Viajás con una lámpara de pie en la mano. Nadie te mira raro. Bueno, todos."},
+]
+const BARRIOS_PER_CHAPTER := 4
+const LIBRE_TEXT := "Terminaste la historia (por ahora). Seguís viajando por Barrio Nuevo con la dificultad al máximo. Se viene el capítulo 3…"
+
 const ITEMS := [
 	{"id": "cafe", "name": "Café", "price": 30, "lim": 2, "desc": "En el sueño te despierta al instante."},
 	{"id": "perf", "name": "Perfume", "price": 40, "lim": 3, "desc": "3 segundos para respirar al lado del oloroso."},
@@ -43,6 +85,15 @@ const SKINS := [
 	{"id": "colect", "name": "Social Colectiveros", "price": 700, "sleeve": "c2362b", "pattern": "checks", "c1": "c2362b", "c2": "1b2430"},
 	{"id": "pasaj", "name": "Unión Pasajeros", "price": 800, "sleeve": "f2b705", "pattern": "halves", "c1": "f2b705", "c2": "4a5568"},
 	{"id": "boleto", "name": "Juventud Boleto", "price": 1000, "sleeve": "1f2f5a", "pattern": "hoops", "c1": "1f2f5a", "c2": "f28c28"},
+	# Premios: no se compran, se ganan al terminar cada barrio ("prize" = índice del barrio)
+	{"id": "p_parada", "name": "Villa Parada Juniors", "price": 0, "prize": 0, "sleeve": "f2b705", "pattern": "band", "c1": "f2b705", "c2": "1b2430"},
+	{"id": "p_ramal", "name": "Ramal Fútbol Club", "price": 0, "prize": 1, "sleeve": "3fae5a", "pattern": "vstripes", "c1": "3fae5a", "c2": "f4f4f0"},
+	{"id": "p_centro", "name": "Centro Hora Pico", "price": 0, "prize": 2, "sleeve": "d64541", "pattern": "halves", "c1": "d64541", "c2": "1b2430"},
+	{"id": "p_costa", "name": "Costanera Nocturna", "price": 0, "prize": 3, "sleeve": "1f2f5a", "pattern": "hoops", "c1": "1f2f5a", "c2": "4fb3e8"},
+	{"id": "p_trasb", "name": "Trasbordo Atlético", "price": 0, "prize": 4, "sleeve": "f28c28", "pattern": "sash", "c1": "f4f4f0", "c2": "f28c28"},
+	{"id": "p_term", "name": "Terminal Sporting", "price": 0, "prize": 5, "sleeve": "9b2c4a", "pattern": "checks", "c1": "9b2c4a", "c2": "f2d33a"},
+	{"id": "p_torres", "name": "Torres Unidas", "price": 0, "prize": 6, "sleeve": "7e57c2", "pattern": "vstripes", "c1": "7e57c2", "c2": "1b2430"},
+	{"id": "p_nuevo", "name": "Barrio Nuevo Mudanzas", "price": 0, "prize": 7, "sleeve": "e0457b", "pattern": "band", "c1": "e0457b", "c2": "f4f4f0"},
 ]
 
 var profile: Dictionary = {}
@@ -61,7 +112,13 @@ func _ready() -> void:
 		profile = fresh_profile()
 		if "--demo" in args:
 			# Partida a mitad de semana, para revisar el diseño en las capturas
-			profile.merge({"coins": 520, "day": 1, "trip": 2, "results": ["ok", "fail"], "tut_done": true}, true)
+			profile.merge({"coins": 520, "barrio": 1, "day": 1, "trip": 2, "results": ["ok", "fail"], "tut_done": true,
+				"owned": {"buzo": true, "p_parada": true}, "story_seen": {"cap0_intro": true, "barrio0": true, "barrio1": true}}, true)
+		# --set=barrio:3,day:4,trip:3 pone esos números en la partida de prueba
+		for a in args:
+			if a.begins_with("--set="):
+				for kv in a.substr(6).split(","):
+					profile[kv.get_slice(":", 0)] = int(kv.get_slice(":", 1))
 	else:
 		load_profile()
 
@@ -91,11 +148,14 @@ func fresh_profile() -> Dictionary:
 		"skills": {"pulmones": 0, "fuerza": 0, "verguenza": 0},
 		"inv": {"cafe": 2, "lock": 1, "perf": 3, "bill": 1},
 		"used": {"cafe": 0, "lock": 0, "perf": 0, "bill": 0},
-		"day": 0,
+		"barrio": 0,           # barrio actual del modo historia (llega a BARRIOS.size() al terminar todo)
+		"day": 0,              # día de la semana dentro del barrio (0 = lunes)
 		"trip": 0,
 		"results": [],
 		"tut_seen": {},
 		"tut_done": false,
+		"story_seen": {},      # carteles de historia ya mostrados
+		"story_queue": [],     # carteles pendientes (finales de barrio y capítulo)
 	}
 
 
@@ -112,7 +172,9 @@ func load_profile() -> void:
 			profile[k] = data[k]
 	# JSON guarda los números como float: los pasamos a int donde corresponde
 	profile["coins"] = int(profile["coins"])
-	profile["day"] = int(profile["day"])
+	profile["barrio"] = int(profile["barrio"])
+	# Las partidas de antes del modo historia contaban los días sin tope: quedan en el barrio 1
+	profile["day"] = int(profile["day"]) % 5
 	profile["trip"] = int(profile["trip"])
 	for group in ["skills", "inv", "used"]:
 		for k in profile[group].keys():
@@ -149,13 +211,95 @@ func strength_mult() -> float:
 	return 1.0 - profile["skills"]["fuerza"] * 0.1
 
 
-## Dificultad del día: 0 el lunes, sube hasta 4
-func diff() -> int:
-	return mini(int(profile["day"]), 4)
+## Dificultad: sube medio punto por barrio y un cuarto por día de la semana (0 el primer lunes, 5 en el modo libre)
+func diff() -> float:
+	if story_done():
+		return 5.0
+	return minf(5.0, barrio_index() * 0.5 + int(profile["day"]) * 0.25)
 
 
 func day_name() -> String:
 	return DAYS[int(profile["day"]) % 5]
+
+
+## El primer día de todos: el bamboleo y las frenadas arrancan más suaves
+func first_day() -> bool:
+	return barrio_index() == 0 and int(profile["day"]) == 0
+
+
+# ---------- Modo historia ----------
+
+## Terminaste los 8 barrios: se sigue jugando el último en modo libre
+func story_done() -> bool:
+	return int(profile["barrio"]) >= BARRIOS.size()
+
+
+## Barrio que se está jugando (en el modo libre, el último)
+func barrio_index() -> int:
+	return mini(int(profile["barrio"]), BARRIOS.size() - 1)
+
+
+func barrio() -> Dictionary:
+	return BARRIOS[barrio_index()]
+
+
+func chapter_index(b := -1) -> int:
+	return (barrio_index() if b < 0 else b) / BARRIOS_PER_CHAPTER
+
+
+## Barrios terminados dentro de un capítulo (0 a 4)
+func chapter_progress(ch: int) -> int:
+	return clampi(int(profile["barrio"]) - ch * BARRIOS_PER_CHAPTER, 0, BARRIOS_PER_CHAPTER)
+
+
+## Se terminó la semana del barrio: premio, cartel de historia y al barrio siguiente.
+## Devuelve las filas extra para el cartel de fin de viaje.
+func complete_week() -> Array:
+	var rows := []
+	if story_done():
+		return rows
+	var b := int(profile["barrio"])
+	var prize: String = BARRIOS[b]["prize"]
+	profile["owned"][prize] = true
+	profile["coins"] += BARRIO_COINS
+	rows.append(["¡Terminaste %s!" % BARRIOS[b]["name"], "+%d" % BARRIO_COINS])
+	rows.append(["Camiseta nueva", skin(prize)["name"]])
+	profile["story_queue"].append("barrio_end:%d" % b)
+	if (b + 1) % BARRIOS_PER_CHAPTER == 0:
+		profile["coins"] += CHAPTER_COINS
+		rows.append(["¡Capítulo terminado!", "+%d" % CHAPTER_COINS])
+		profile["story_queue"].append("cap_end:%d" % (b / BARRIOS_PER_CHAPTER))
+	profile["barrio"] = b + 1
+	return rows
+
+
+## Próximo cartel de historia para mostrar en el menú ("" si no hay ninguno)
+func next_story() -> String:
+	var q: Array = profile["story_queue"]
+	if q.size() > 0:
+		return q[0]
+	if story_done():
+		return "" if profile["story_seen"].get("libre", false) else "libre"
+	var ch := chapter_index()
+	if not profile["story_seen"].get("cap%d_intro" % ch, false):
+		return "cap_intro:%d" % ch
+	if not profile["story_seen"].get("barrio%d" % barrio_index(), false):
+		return "barrio_intro:%d" % barrio_index()
+	return ""
+
+
+func mark_story(key: String) -> void:
+	var q: Array = profile["story_queue"]
+	if q.size() > 0 and q[0] == key:
+		q.pop_front()
+	match key.get_slice(":", 0):
+		"cap_intro":
+			profile["story_seen"]["cap%s_intro" % key.get_slice(":", 1)] = true
+		"barrio_intro":
+			profile["story_seen"]["barrio%s" % key.get_slice(":", 1)] = true
+		"libre":
+			profile["story_seen"]["libre"] = true
+	save()
 
 
 ## Ítems disponibles para este viaje: lo que hay en la mochila, sin pasar el límite diario
@@ -217,7 +361,7 @@ func skin(id: String) -> Dictionary:
 
 func buy_skin(id: String) -> bool:
 	var s := skin(id)
-	if profile["owned"].get(id, false) or profile["coins"] < s["price"]:
+	if s.has("prize") or profile["owned"].get(id, false) or profile["coins"] < s["price"]:
 		return false
 	profile["coins"] -= s["price"]
 	profile["owned"][id] = true

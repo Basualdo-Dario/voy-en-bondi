@@ -186,6 +186,29 @@ func _draw_icon(kind: String, c: Vector2, s: float) -> void:
 			draw_circle(c + Vector2(-0.22, -0.1) * s, 0.08 * s, ink)
 			draw_circle(c + Vector2(0.22, -0.1) * s, 0.08 * s, ink)
 			draw_arc(c + Vector2(0, 0.35) * s, 0.25 * s, -PI * 0.85, -PI * 0.15, 8, ink, 3)
+		"map":
+			var fold := PackedVector2Array([c + Vector2(-0.7, -0.45) * s, c + Vector2(-0.25, -0.6) * s, c + Vector2(0.25, -0.45) * s, c + Vector2(0.7, -0.6) * s,
+				c + Vector2(0.7, 0.5) * s, c + Vector2(0.25, 0.65) * s, c + Vector2(-0.25, 0.5) * s, c + Vector2(-0.7, 0.65) * s])
+			draw_colored_polygon(fold, Color("9fd3a8"))
+			draw_polyline(fold + PackedVector2Array([fold[0]]), ink, 3, true)
+			draw_line(c + Vector2(-0.25, -0.6) * s, c + Vector2(-0.25, 0.5) * s, ink, 2, true)
+			draw_line(c + Vector2(0.25, -0.45) * s, c + Vector2(0.25, 0.65) * s, ink, 2, true)
+			draw_circle(c + Vector2(0.05, -0.05) * s, 0.16 * s, Color("e0457b"))
+		"check":
+			draw_circle(c, 0.6 * s, Color("3fae5a"))
+			draw_polyline(PackedVector2Array([c + Vector2(-0.3, 0) * s, c + Vector2(-0.08, 0.22) * s, c + Vector2(0.32, -0.2) * s]), Color.WHITE, s * 0.16, true)
+		"bus":
+			var body := Rect2(c + Vector2(-0.7, -0.45) * s, Vector2(1.4, 0.8) * s)
+			var sb := StyleBoxFlat.new()
+			sb.bg_color = Color("f2b705")
+			sb.set_corner_radius_all(int(0.18 * s))
+			sb.border_color = ink
+			sb.set_border_width_all(3)
+			sb.draw(get_canvas_item(), body)
+			for i in 3:
+				draw_rect(Rect2(body.position + Vector2((0.14 + i * 0.4) * s, 0.12 * s), Vector2(0.3, 0.26) * s), Color("dff1fb"))
+			for x in [-0.38, 0.38]:
+				draw_circle(c + Vector2(x, 0.38) * s, 0.15 * s, ink)
 		"close":
 			draw_line(c + Vector2(-0.4, -0.4) * s, c + Vector2(0.4, 0.4) * s, ink, s * 0.16, true)
 			draw_line(c + Vector2(0.4, -0.4) * s, c + Vector2(-0.4, 0.4) * s, ink, s * 0.16, true)

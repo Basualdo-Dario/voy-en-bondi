@@ -25,7 +25,32 @@ Una partida es un día con 4 viajes en orden. Entre viaje y viaje se vuelve al m
 | 3. Facultad → gimnasio | Tarde-noche | Robos, pasajeros con mal olor |
 | 4. Gimnasio → casa | Noche | Piernas cansadas, ceder el lugar o fingir dormir ante la embarazada |
 
-**Progresión (propuesta):** cada día es un día de la semana, de lunes a viernes, con dificultad creciente. Terminar la semana desbloquea recorridos, eventos y skins.
+**Progresión:** cada día es un día de la semana, de lunes a viernes, con dificultad creciente. Cada semana es un barrio del modo historia (ver abajo).
+
+## Modo historia
+
+La partida se arma como una historia con dos capítulos, cada uno con un objetivo grande y un final con remate. Los textos y los datos de los barrios están en `scripts/game.gd` (`CHAPTERS` y `BARRIOS`).
+
+- **Capítulo 1 · La moto:** el pibe junta para una moto y dejar el bondi. Final: se la compra y se le rompe el primer día.
+- **Capítulo 2 · Mudarse cerca:** quiere mudarse cerca del laburo. Final: se muda y lo trasladan a la sede de la otra punta de la ciudad.
+- **Después:** modo libre en el último barrio con la dificultad al máximo, hasta que llegue el capítulo 3.
+
+**Mapa:** cada capítulo es una zona de la ciudad con 4 barrios que se desbloquean de a uno, unidos por el recorrido del colectivo. Adentro de cada barrio, la semana se ve como un recorrido de 5 paradas (lunes a viernes, 4 viajes por día).
+
+| # | Capítulo | Barrio | Línea | Novedad (etapas siguientes) |
+| --- | --- | --- | --- | --- |
+| 1 | La moto | Villa Parada | 42 (amarilla) | Barrio inicial, eventos actuales |
+| 2 | La moto | Barrio Ramal | 17 (verde) | El pibe con el parlante a todo volumen |
+| 3 | La moto | El Centro | 101 (roja) | Hora pico: ir al fondo sin chocar a nadie |
+| 4 | La moto | La Costanera | 5 (celeste, de noche) | El que se duerme encima tuyo |
+| 5 | Mudarse cerca | Villa Trasbordo | 33 (naranja) | Tocar el timbre justo antes de la parada (propuesta) |
+| 6 | Mudarse cerca | Barrio Terminal | 88 (bordó) | El músico que pasa la gorra (propuesta) |
+| 7 | Mudarse cerca | Las Torres | 214 (violeta) | La señora del changuito: esquivarlo inclinándote (propuesta) |
+| 8 | Mudarse cerca | Barrio Nuevo | 9 (rosa, de noche) | Viajar con la lámpara de la mudanza (propuesta) |
+
+**Al terminar un barrio:** camiseta exclusiva del barrio (no se compra) y +200 monedas. Al terminar un capítulo: +500 más. Los carteles de historia salen en el menú: intro de cada capítulo y barrio, y los finales.
+
+**Dificultad:** sube medio punto por barrio y un cuarto por día de la semana (de 0 el primer lunes hasta 4,5 el viernes del barrio 8; 5 en el modo libre).
 
 ## Eventos y controles
 
@@ -141,7 +166,7 @@ Con 3 o 4 fallas se pierde el viaje.
 | Fuerza | Aguantás frenadas suaves | +10% de inclinación tolerada | +50% |
 | Resistencia a la vergüenza | Vergüenza normal | −8% de vergüenza por falla | −40% |
 
-**Dificultad por día:** de lunes a viernes los personajes pasan más seguido, el choro tira más fuerte y las frenadas son más bruscas.
+**Dificultad:** sube con cada día y cada barrio (ver Modo historia): el choro tira más fuerte, las frenadas vienen más seguido y el vendedor da menos tiempo.
 
 ## Monetización
 

@@ -4,6 +4,7 @@ Cada cambio del juego, del más nuevo al más viejo. El detalle completo y la fo
 
 ## 2026-10-13
 
+- **Modo historia (etapa 1):** dos capítulos ("La moto" y "Mudarse cerca") con 8 barrios. Cada barrio es una semana con su línea de colectivo (otro color, otro cartel, algunos de noche). Pantalla de Mapa con la ciudad, los barrios y el recorrido de la semana. Carteles de historia al empezar capítulos y barrios, y finales con remate. Al terminar un barrio: camiseta exclusiva y +200 monedas; al terminar un capítulo, +500. La dificultad sube por barrio. Las partidas guardadas siguen en el barrio 1.
 - **Pasajeros nuevos:** la abuela, el oficinista, el estudiante y el obrero, con colores apagados y dos variantes cada uno. Siete van sentados (cambian de asiento en cada viaje) y tres parados agarrados de la manija.
 - **Interfaz más moderna:** letra nueva (Fredoka), botones con relieve, brillo y sombra suave, tarjetas con sombras difuminadas, barras más prolijas, moneda dibujada en lugar del "●", nivel de habilidades como barrita de 5 segmentos, cartel de arriba del viaje más compacto, ícono en la barra de vergüenza y carteles que aparecen con una animación.
 - **Pruebas automáticas:** el piloto automático y las capturas juegan con una partida de prueba y ya no tocan la partida guardada.
