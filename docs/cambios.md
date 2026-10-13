@@ -4,6 +4,7 @@ Cada cambio del juego, del más nuevo al más viejo. El detalle completo y la fo
 
 ## 2026-10-13
 
+- **Pasajeros nuevos:** la abuela, el oficinista, el estudiante y el obrero, con colores apagados y dos variantes cada uno. Siete van sentados (cambian de asiento en cada viaje) y tres parados agarrados de la manija.
 - **Interfaz más moderna:** letra nueva (Fredoka), botones con relieve, brillo y sombra suave, tarjetas con sombras difuminadas, barras más prolijas, moneda dibujada en lugar del "●", nivel de habilidades como barrita de 5 segmentos, cartel de arriba del viaje más compacto, ícono en la barra de vergüenza y carteles que aparecen con una animación.
 - **Pruebas automáticas:** el piloto automático y las capturas juegan con una partida de prueba y ya no tocan la partida guardada.
 - **Vendedor ambulante:** mientras te ofrece cosas no arranca ningún otro evento de botón (oloroso, choro, embarazada ni sueño). Las frenadas siguen igual. Si llega cuando hay otro evento, espera a que termine. Después de que se va hay 1,2 s de respiro antes del próximo evento.

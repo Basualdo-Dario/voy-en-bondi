@@ -175,6 +175,75 @@ static func vendedor(parent: Node3D) -> Dictionary:
 	return _wrap(parent, h)
 
 
+# ---------- Pasajeros comunes (relleno, sin evento) ----------
+
+## Pelo en la nuca: los pasajeros sentados se ven de espaldas
+static func _back_hair(g: Node3D, c: Color) -> void:
+	Build.sphere(g, .5, c, Vector3(0, 2.17, -.13), 16)
+
+# Van con colores apagados para que las amenazas resalten. "v" elige una de dos variantes de color.
+
+static func abuela(parent: Node3D, v := 0) -> Dictionary:
+	var chal: Color = [Color("a497ab"), Color("8fa39a")][v % 2]
+	var hair := Color("d6d6d2")
+	var h := _humanoid({"skin": Color("e3c4a8"), "shirt": chal, "sleeve": chal, "pants": Color("6b6f7a"), "shoes": Color("4a4540")})
+	var g: Node3D = h["g"]
+	Build.cap(g, .58, hair, Vector3(0, 2.22, -.02))                                      # pelo canoso
+	Build.sphere(g, .22, hair, Vector3(0, 2.72, -.2))                                     # rodete
+	_back_hair(g, hair)
+	for s in [-1, 1]:
+		var lens := Build.ring(g, .12, .025, Color("5a4a3e"), Vector3(s * .18, 2.24, .55))  # anteojos
+		lens.rotation.x = PI / 2
+	Build.box(g, Vector3(.14, .03, .03), Color("5a4a3e"), Vector3(0, 2.26, .56))
+	Build.box(g, Vector3(.9, .32, .58), chal.darkened(.15), Vector3(0, 1.5, 0))            # chal tejido
+	Build.box(g, Vector3(.38, .42, .24), Color("c9bfa8"), Vector3(-.68, .5, .05))          # bolsa de compras
+	return _wrap(parent, h)
+
+
+static func oficinista(parent: Node3D, v := 0) -> Dictionary:
+	var shirt: Color = [Color("a9bccc"), Color("c4c0b4")][v % 2]
+	var h := _humanoid({"skin": Color("d9b391"), "shirt": shirt, "sleeve": shirt, "pants": Color("4a5260"), "shoes": Color("2b2f36")})
+	var g: Node3D = h["g"]
+	Build.cap(g, .57, Color("3d3530"), Vector3(0, 2.25, -.04))                            # pelo corto
+	_back_hair(g, Color("3d3530"))
+	Build.box(g, Vector3(.34, .08, .05), shirt.darkened(.12), Vector3(0, 1.6, .26))       # cuello
+	Build.box(g, Vector3(.13, .58, .03), Color("5a6475"), Vector3(0, 1.3, .27))           # corbata
+	Build.box(g, Vector3(.5, .36, .14), Color("5e4a3a"), Vector3(-.68, .55, 0))           # maletín
+	Build.box(g, Vector3(.14, .24, .03), Color("2b2f36"), Vector3(-.5, .95, .16))         # celular
+	return _wrap(parent, h)
+
+
+static func estudiante(parent: Node3D, v := 0) -> Dictionary:
+	var coat := Color("e8e6df")
+	var bag: Color = [Color("7d8a6a"), Color("6f7f99")][v % 2]
+	var h := _humanoid({"skin": SKIN, "shirt": coat, "sleeve": coat, "pants": Color("4f5866"), "shoes": Color("d9dce0")})
+	var g: Node3D = h["g"]
+	Build.box(g, Vector3(.86, .55, .54), coat, Vector3(0, .52, 0))                        # guardapolvo largo
+	for y in [1.4, 1.1, .8]:
+		Build.sphere(g, .04, Color("9aa0a8"), Vector3(0, y, .28), 6)                      # botones
+	Build.cap(g, .58, Color("4a3a2e"), Vector3(0, 2.22, -.02))
+	_back_hair(g, Color("4a3a2e"))
+	Build.box(g, Vector3(.66, .75, .3), bag, Vector3(0, 1.2, -.42))                       # mochila
+	for s in [-1, 1]:
+		Build.sphere(g, .06, Color.WHITE, Vector3(s * .57, 2.15, .08), 6)                 # auriculares chiquitos
+	return _wrap(parent, h)
+
+
+static func obrero(parent: Node3D, v := 0) -> Dictionary:
+	var vest: Color = [Color("c48d63"), Color("b9a35e")][v % 2]
+	var tee := Color("8a8f96")
+	var h := _humanoid({"skin": Color("c99a76"), "shirt": tee, "sleeve": tee, "pants": Color("5a6b80"), "shoes": Color("5c4a3a")})
+	var g: Node3D = h["g"]
+	Build.box(g, Vector3(.86, .8, .56), vest, Vector3(0, 1.22, 0))                        # chaleco
+	for y in [1.05, 1.35]:
+		Build.box(g, Vector3(.87, .07, .57), Color("d8dcdf"), Vector3(0, y, 0))           # bandas reflectivas
+	Build.cap(g, .6, Color("c9b458"), Vector3(0, 2.3, 0))                                 # casco
+	_back_hair(g, Color("3a2e26"))
+	Build.box(g, Vector3(.7, .04, .26), Color("c9b458"), Vector3(0, 2.32, .55))
+	Build.box(g, Vector3(.4, .3, .26), Color("6b6355"), Vector3(-.66, .5, .05))           # bolso con la vianda
+	return _wrap(parent, h)
+
+
 static func comun(parent: Node3D, shirt: Color) -> Dictionary:
 	var h := _humanoid({"skin": Color("d8c2b0"), "shirt": shirt, "sleeve": shirt, "pants": Color("4f5866"), "shoes": Color("2b313b")})
 	var g: Node3D = h["g"]

@@ -8,6 +8,8 @@ const WALK_X := -0.3
 const Z_MIN := -10.5
 const Z_MAX := 1.5
 const TRIG_Z := PIBE_Z - 0.6
+# Asientos ocupados por pasajeros comunes (x, z)
+const SEATS := [Vector2(-1.12, -.8), Vector2(-1.12, -3.8), Vector2(1.12, -5.3), Vector2(-1.12, -6.8), Vector2(1.12, -8.3), Vector2(-1.12, -9.8), Vector2(-1.12, .7)]
 
 const C_INK := Color("1b2430")
 const C_YELLOW := Color("f2b705")
@@ -35,6 +37,7 @@ var cam: Camera3D
 var outside: Array = []
 var pibe: Dictionary
 var walkers: Array = []
+var seated_nodes: Array = []
 var marker: Label3D
 var stink_parts: Array = []
 var fly_parts: Array = []
@@ -220,12 +223,19 @@ func _build_world() -> void:
 		{"d": Characters.embarazada(self), "type": "emb", "speed": .8},
 		{"d": Characters.vendedor(self), "type": "vend", "speed": 1.2},
 	]
-	var seated := [Vector2(-1.12, -.8), Vector2(-1.12, -3.8), Vector2(1.12, -5.3), Vector2(-1.12, -6.8), Vector2(1.12, -8.3), Vector2(-1.12, -9.8), Vector2(-1.12, .7)]
-	var grays := [Color("b4bcc7"), Color("9aa3af"), Color("a7b0bb")]
-	for i in seated.size():
-		var c := Characters.comun(self, grays[i % 3])
-		c["root"].position = Vector3(seated[i].x, .085, seated[i].y)
+	# Pasajeros comunes sentados: en cada viaje se mezclan los asientos (ver reset_trip)
+	for k in [["abuela", 0], ["oficinista", 0], ["estudiante", 0], ["obrero", 0], ["comun", 0], ["abuela", 1], ["estudiante", 1]]:
+		var c := _passenger(k[0], k[1])
 		c["root"].rotation.y = PI
+		seated_nodes.append(c["root"])
+	_shuffle_seats()
+	# Y algunos parados del lado derecho, agarrados de la manija, lejos del pasillo
+	var standing := [["oficinista", 1, -2.0], ["obrero", 1, -3.4], ["estudiante", 0, -4.6]]
+	for k in standing:
+		var c := _passenger(k[0], k[1])
+		c["root"].position = Vector3(.92, 0, k[2])
+		c["root"].rotation.y = PI
+		Characters.set_grab(c, true)
 
 	marker = Label3D.new()
 	marker.text = "!"
@@ -238,6 +248,28 @@ func _build_world() -> void:
 	marker.pixel_size = 0.004
 	marker.visible = false
 	add_child(marker)
+
+
+func _passenger(kind: String, v: int) -> Dictionary:
+	match kind:
+		"abuela":
+			return Characters.abuela(self, v)
+		"oficinista":
+			return Characters.oficinista(self, v)
+		"estudiante":
+			return Characters.estudiante(self, v)
+		"obrero":
+			return Characters.obrero(self, v)
+	return Characters.comun(self, [Color("b4bcc7"), Color("9aa3af")][v % 2])
+
+
+## Reparte a los pasajeros sentados en asientos al azar
+func _shuffle_seats() -> void:
+	var spots := SEATS.duplicate()
+	spots.shuffle()
+	for i in seated_nodes.size():
+		var s: Vector2 = spots[i]
+		seated_nodes[i].position = Vector3(s.x, .085, s.y)
 
 
 func _seat(parent: Node3D, x: float, z: float) -> void:
@@ -633,6 +665,7 @@ func reset_trip() -> void:
 	_clear(ui["vend"])
 	ui["vend"].visible = false
 	marker.visible = false
+	_shuffle_seats()
 	# Orden de llegada de los personajes al azar
 	var order := walkers.duplicate()
 	order.shuffle()

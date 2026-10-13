@@ -167,6 +167,12 @@ El juego es 3D low-poly: personajes armados con formas simples, colores fuertes 
 | La embarazada | Fingir dormir | Rodete con broche, aros grandes, remera rosa, calza, bolsa de los mandados |
 | El sucio del gym | Amenaza: olor | Musculosa, short, vincha, ojotas con medias, mancuerna, olor verde y moscas |
 | Pasajero común | Relleno | Todo en gris, mochila adelante, termo bajo el brazo |
+| La abuela | Relleno | Pelo canoso con rodete, anteojos, chal tejido, bolsa de compras |
+| El oficinista | Relleno | Camisa, corbata, maletín y celular en la mano |
+| El estudiante | Relleno | Guardapolvo blanco, mochila, auriculares chiquitos |
+| El obrero | Relleno | Casco, chaleco con bandas reflectivas, bolso con la vianda |
+
+Los pasajeros de relleno van con colores apagados (cada uno tiene dos variantes) para que las amenazas resalten. Siete van sentados, mezclados al azar en cada viaje, y tres parados del lado derecho, agarrados de la manija y lejos del pasillo.
 | El vendedor ambulante | Molestia: te ofrece cosas | Remera naranja, gorra roja y bandeja de golosinas colgada del cuello |
 
 ## Primera versión (alcance)
