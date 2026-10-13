@@ -1,0 +1,6 @@
+# Godot usa finales de línea LF: que Git no los cambie en Windows
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ogg binary
+*.wav binary

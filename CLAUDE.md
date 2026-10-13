@@ -44,3 +44,12 @@ godot --headless --path . --fixed-fps 60 --quit-after 6000 -- --autotest
 # Captura de una pantalla del menú (necesita pantalla virtual, por ejemplo xvfb-run)
 godot --path . --rendering-driver opengl3 --resolution 405x855 -- --tap=go:skins,pick:ramal --shot=captura.png
 ```
+
+## Historial de cambios (Git)
+
+El proyecto usa Git (rama `main`). Después de cada cambio que funcione:
+
+1. Anotarlo arriba de todo en `docs/cambios.md`, con la fecha y en lenguaje de jugador (qué cambia en el juego, no en el código).
+2. Hacer un commit con un mensaje en castellano que explique qué cambió y por qué.
+
+Así cualquier cambio se puede deshacer volviendo a un commit anterior.
