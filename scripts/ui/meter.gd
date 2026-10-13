@@ -29,20 +29,41 @@ func _draw() -> void:
 	var r := Rect2(Vector2.ZERO, size)
 	var rad: int = int(min(radius, size.y / 2.0))
 	_rounded(r, bg, rad)
+	# Sombrita interior arriba: la barra se ve "hundida"
+	if bg.a > 0:
+		_rounded(Rect2(0, 0, r.size.x, r.size.y * 0.45), Color(0, 0, 0, 0.05), rad)
 	for z in zones:
-		var zr := Rect2(r.position.x + r.size.x * float(z["a"]), 0, r.size.x * float(z["w"]), r.size.y)
+		var a: float = z["a"]
+		var w: float = z["w"]
+		var zr := Rect2(r.position.x + r.size.x * a, 0, r.size.x * w, r.size.y)
 		if zr.size.x > 0.5:
-			draw_rect(zr, z["c"])
+			# Las zonas que tocan una punta copian la curva de la barra
+			var zs := StyleBoxFlat.new()
+			zs.bg_color = z["c"]
+			var all_round: bool = z.get("round", false)
+			var lr := rad if (a <= 0.001 or all_round) else 0
+			var rr := rad if (a + w >= 0.999 or all_round) else 0
+			zs.corner_radius_top_left = lr
+			zs.corner_radius_bottom_left = lr
+			zs.corner_radius_top_right = rr
+			zs.corner_radius_bottom_right = rr
+			zs.draw(get_canvas_item(), zr)
 	if fill > 0.0:
-		_rounded(Rect2(0, 0, r.size.x * clampf(fill, 0, 1), r.size.y), fill_color, rad)
+		var fw := maxf(r.size.y, r.size.x * clampf(fill, 0, 1))
+		_rounded(Rect2(0, 0, fw, r.size.y), fill_color, rad)
+		_rounded(Rect2(r.size.y * 0.25, r.size.y * 0.16, maxf(0.0, fw - r.size.y * 0.5), r.size.y * 0.3), Color(1, 1, 1, 0.3), rad)
 	if needle >= 0.0:
 		var x := r.size.x * clampf(needle, 0, 1)
-		draw_rect(Rect2(x - 4, -5, 8, r.size.y + 10), Color("1b2430"))
+		_rounded(Rect2(x - 6, -7, 12, r.size.y + 14), Color.WHITE, 6)
+		_rounded(Rect2(x - 3.5, -4.5, 7, r.size.y + 9), Color("1b2430"), 4)
 	if dot >= 0.0:
 		var x2 := r.size.x * clampf(dot, 0, 1)
 		var cy := r.size.y / 2.0
-		draw_circle(Vector2(x2, cy), r.size.y * 0.75 + 4, Color("1b2430"))
-		draw_circle(Vector2(x2, cy), r.size.y * 0.75, Color("f2b705"))
+		var dr := r.size.y * 0.75
+		draw_circle(Vector2(x2, cy + 3), dr + 4, Color(0, 0, 0, 0.18))
+		draw_circle(Vector2(x2, cy), dr + 4, Color.WHITE)
+		draw_circle(Vector2(x2, cy), dr, Color("f2b705"))
+		draw_circle(Vector2(x2 - dr * 0.3, cy - dr * 0.35), dr * 0.28, Color(1, 1, 1, 0.6))
 	if face >= 0.0:
 		var x3 := r.size.x * clampf(face, 0, 1)
 		var c := Vector2(x3, r.size.y / 2.0)

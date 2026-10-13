@@ -254,7 +254,7 @@ func _seat(parent: Node3D, x: float, z: float) -> void:
 #  INTERFAZ
 # =====================================================================
 
-func _style(c: Color, radius := 22) -> StyleBoxFlat:
+func _style(c: Color, radius := 24) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = c
 	sb.set_corner_radius_all(radius)
@@ -262,12 +262,20 @@ func _style(c: Color, radius := 22) -> StyleBoxFlat:
 	sb.content_margin_right = 18
 	sb.content_margin_top = 10
 	sb.content_margin_bottom = 10
+	# Sombra suave y difuminada (solo en tarjetas blancas, no en los chips de color)
+	if c.a > 0.8 and c.get_luminance() > 0.985:
+		sb.shadow_color = Color(0.06, 0.08, 0.12, 0.14)
+		sb.shadow_size = 18
+		sb.shadow_offset = Vector2(0, 6)
 	return sb
 
 
+## Texto. Desde 30 px va en negrita (títulos)
 func _label(text: String, size := 26, color := C_INK, align := HORIZONTAL_ALIGNMENT_LEFT) -> Label:
 	var l := Label.new()
 	l.text = text
+	if size >= 30:
+		l.add_theme_font_override("font", Game.font_bold)
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	l.horizontal_alignment = align
@@ -329,18 +337,29 @@ func _build_hud() -> void:
 	game_nodes.append(pause)
 	var trip_p := _panel()
 	trip_p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var trip_l := _label("", 24, C_INK, HORIZONTAL_ALIGNMENT_CENTER)
-	trip_p.add_child(trip_l)
+	var trip_v := VBoxContainer.new()
+	trip_v.add_theme_constant_override("separation", -6)
+	var trip_k := _label("", 17, Color("5b6573"), HORIZONTAL_ALIGNMENT_CENTER)
+	trip_v.add_child(trip_k)
+	var trip_l := _label("", 30, C_INK, HORIZONTAL_ALIGNMENT_CENTER)
+	trip_v.add_child(trip_l)
+	trip_p.add_child(trip_v)
 	top.add_child(trip_p)
 	game_nodes.append(trip_p)
 	var spacer_top := Control.new()
 	spacer_top.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(spacer_top)
 	ui["spacer_top"] = spacer_top
+	ui["trip_k"] = trip_k
 	ui["trip"] = trip_l
-	var coins_p := _panel()
-	var coins_l := _label("", 28)
-	coins_p.add_child(coins_l)
+	var coins_p := _panel(C_WHITE95, 999)
+	var coins_row := HBoxContainer.new()
+	coins_row.add_theme_constant_override("separation", 8)
+	coins_row.add_child(Coin.new(30))
+	var coins_l := _label("", 30)
+	coins_row.add_child(coins_l)
+	coins_p.add_child(coins_row)
+	coins_p.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top.add_child(coins_p)
 	ui["coins"] = coins_l
 
@@ -355,7 +374,12 @@ func _build_hud() -> void:
 	# Vergüenza
 	var shame_p := _panel()
 	var shame_row := HBoxContainer.new()
-	shame_row.add_theme_constant_override("separation", 14)
+	shame_row.add_theme_constant_override("separation", 10)
+	var blush := TouchButton.new("", "", Vector2(44, 44))
+	blush.icon = "blush"
+	blush.bg = Color(0, 0, 0, 0)
+	blush.shadow = Color(0, 0, 0, 0)
+	shame_row.add_child(blush)
 	shame_row.add_child(_label("Vergüenza", 22))
 	var shame_m := Meter.new(18)
 	shame_m.fill_color = C_PINK
@@ -478,7 +502,7 @@ func show_skin(id: String) -> void:
 
 
 func update_coins() -> void:
-	ui["coins"].text = "● %d" % Game.profile["coins"]
+	ui["coins"].text = str(Game.profile["coins"])
 
 
 func _clear(node: Node) -> void:
@@ -515,6 +539,13 @@ func show_modal(kicker: String, title: String, body: String, rows: Array, button
 	sb.content_margin_top = 30
 	sb.content_margin_bottom = 34
 	center.add_child(card)
+	# Entrada con "pop": el cartel crece un poquito desde el centro y aparece
+	card.resized.connect(func(): card.pivot_offset = card.size / 2.0)
+	card.scale = Vector2.ONE * 0.88
+	center.modulate.a = 0.0
+	var tw := card.create_tween().set_parallel()
+	tw.tween_property(card, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(center, "modulate:a", 1.0, 0.16)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 16)
 	card.add_child(v)
@@ -571,7 +602,8 @@ func modal_open() -> bool:
 func reset_trip() -> void:
 	var p := Game.profile
 	var tr: Dictionary = Game.TRIPS[p["trip"]]
-	ui["trip"].text = "%s · Viaje %d de 4\n%s → %s" % [Game.day_name(), p["trip"] + 1, tr["from"], tr["to"]]
+	ui["trip_k"].text = ("%s · Viaje %d de 4" % [Game.day_name(), p["trip"] + 1]).to_upper()
+	ui["trip"].text = "%s → %s" % [tr["from"], tr["to"]]
 	phase = "start"
 	t = 0.0
 	shame = 0.0
@@ -621,7 +653,7 @@ func reset_trip() -> void:
 	_set_mode("game")
 	Skins.apply(p["eq"], shirt_mat, sleeve_mat)
 	_upd_bars()
-	ui["coins"].text = "● %d" % p["coins"]
+	update_coins()
 	var body := "Llegá sin pasar vergüenza. Los personajes van y vienen por el pasillo: cuando pasan cerca tuyo, arranca su evento." if (p["trip"] == 0 and p["day"] == 0) else ""
 	show_modal("%s · Viaje %d de 4" % [Game.day_name(), p["trip"] + 1], "%s → %s" % [tr["from"], tr["to"]], body, [], [["start", "¡ARRANCAR!", 420, C_YELLOW], ["shopfirst", "Tienda", 130, Color("eef1f5"), "shop"]], true)
 	if autotest:
@@ -1033,7 +1065,7 @@ func end_trip() -> void:
 	else:
 		p["trip"] += 1
 	Game.save()
-	ui["coins"].text = "● %d" % p["coins"]
+	update_coins()
 	if autotest:
 		print("FIN DEL VIAJE: fallado=%s puntaje=%d eventos=%d" % [failed, score, ok_count])
 		get_tree().quit()
@@ -1192,7 +1224,7 @@ func _tap(id: String) -> void:
 			if items.get("bill", 0) > 0 and vend != null:
 				_use_item("bill")
 				Game.profile["coins"] = maxi(0, Game.profile["coins"] - 5)
-				ui["coins"].text = "● %d" % Game.profile["coins"]
+				update_coins()
 				toast("Le compraste un caramelo y se fue")
 				end_vend(true)
 		"nogracias":
@@ -1270,7 +1302,7 @@ func _step(dt: float) -> void:
 			var lost := mini(20, Game.profile["coins"])
 			Game.profile["coins"] -= lost
 			robbed += lost
-			ui["coins"].text = "● %d" % Game.profile["coins"]
+			update_coins()
 			end_vend(false)
 			toast("Te enchufó unas medias: −20 monedas")
 
@@ -1394,7 +1426,7 @@ func _step_event(dt: float) -> void:
 				var lost := mini(30, Game.profile["coins"])
 				Game.profile["coins"] -= lost
 				robbed += lost
-				ui["coins"].text = "● %d" % Game.profile["coins"]
+				update_coins()
 				end_ev(false)
 				add_shame("robo", "Te robaron 30 monedas.")
 		"eleccion":

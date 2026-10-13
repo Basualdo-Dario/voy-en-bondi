@@ -31,6 +31,8 @@ Los números de economía están en `scripts/game.gd`. **Antes de cambiar reglas
 - Los botones tienen grupo: "game", "menu" o "modal". Con un cartel abierto solo responden los del grupo "modal".
 - En GDScript, cuando un valor viene de un Dictionary, declarar el tipo explícito (`var x: float = d["k"]`) en vez de `:=`, porque si no falla el parseo.
 - La interfaz se arma por código (no hay escenas .tscn de UI).
+- Estilo visual "juego móvil vivo": letra Fredoka (`Game.font` y `Game.font_bold`; `_label` pone negrita desde 30 px), botones con relieve (el color `shadow` del `TouchButton` es el canto; transparente = botón plano) y tarjetas blancas con sombra suave (`_style`). En el texto de un botón, "●" se dibuja como moneda (`Coin`).
+- Con `--autotest` o `--shot`, `Game.testing` está prendido: se juega con una partida en memoria que no se guarda. `--demo` arranca esa partida a mitad de semana (para capturas).
 
 ## Cómo probar sin abrir el editor
 
@@ -42,7 +44,10 @@ godot --headless --editor --quit --path .
 godot --headless --path . --fixed-fps 60 --quit-after 6000 -- --autotest
 
 # Captura de una pantalla del menú (necesita pantalla virtual, por ejemplo xvfb-run)
-godot --path . --rendering-driver opengl3 --resolution 405x855 -- --tap=go:skins,pick:ramal --shot=captura.png
+godot --path . --rendering-driver opengl3 --resolution 405x855 -- --demo --tap=go:skins,pick:ramal --shot=captura.png
+
+# Captura en medio de un viaje (a los 10 segundos)
+godot --path . --rendering-driver opengl3 --resolution 405x855 -- --autotest --shot=captura.png --shot-time=10
 ```
 
 ## Historial de cambios (Git)

@@ -46,10 +46,41 @@ const SKINS := [
 ]
 
 var profile: Dictionary = {}
+## En las pruebas automáticas (--autotest, --shot) se juega con una partida en memoria que no se guarda
+var testing := false
+## Letras del juego: Fredoka (licencia OFL, ver assets/fonts/OFL.txt)
+var font: Font
+var font_bold: Font
 
 
 func _ready() -> void:
-	load_profile()
+	_load_fonts()
+	var args := OS.get_cmdline_user_args()
+	testing = "--autotest" in args or Array(args).any(func(a): return a.begins_with("--shot"))
+	if testing:
+		profile = fresh_profile()
+		if "--demo" in args:
+			# Partida a mitad de semana, para revisar el diseño en las capturas
+			profile.merge({"coins": 520, "day": 1, "trip": 2, "results": ["ok", "fail"], "tut_done": true}, true)
+	else:
+		load_profile()
+
+
+func _load_fonts() -> void:
+	var base: FontFile = load("res://assets/fonts/Fredoka.ttf")
+	var system_fallback := ThemeDB.fallback_font  # para símbolos que Fredoka no tiene (✓, ✗)
+	base.fallbacks = [system_fallback]
+	font = _weight(base, 500)
+	font_bold = _weight(base, 650)
+	ThemeDB.fallback_font = font
+	ThemeDB.get_default_theme().default_font = font
+
+
+func _weight(base: Font, w: int) -> FontVariation:
+	var f := FontVariation.new()
+	f.base_font = base
+	f.variation_opentype = {TextServerManager.get_primary_interface().name_to_tag("wght"): w}
+	return f
 
 
 func fresh_profile() -> Dictionary:
@@ -89,6 +120,8 @@ func load_profile() -> void:
 
 
 func save() -> void:
+	if testing:
+		return
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(profile))

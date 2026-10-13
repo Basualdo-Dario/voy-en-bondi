@@ -46,70 +46,110 @@ func set_down(v: bool) -> void:
 	queue_redraw()
 
 
+const LIP := 8.0   # alto del "canto" de abajo que le da relieve al botón
+
+
 func _draw() -> void:
 	var r := Rect2(Vector2.ZERO, size)
-	var off := Vector2(0, 4) if down else Vector2.ZERO
 	var scale_p: float = 1.0 + (0.05 * sin(_t * 7.0) if pulse and not down else 0.0)
 	if scale_p != 1.0:
 		var grow := size * (scale_p - 1.0) * 0.5
 		r = Rect2(-grow, size * scale_p)
-	var body_bg := bg if not disabled else Color("e3e7ed")
+	# Botón plano (shadow transparente) o con relieve: el cuerpo se apoya sobre un canto más oscuro
+	var flat := shadow.a == 0.0
+	var lip := 0.0 if flat else LIP
+	var body := Rect2(r.position, Vector2(r.size.x, r.size.y - lip))
+	if down:
+		body.position.y += lip - 2.0 if not flat else 2.0
+	var body_bg := bg if not disabled else Color("e6e9ee")
+	var rad: int = int(minf(body.size.x, body.size.y) / 2.0) if shape == "circle" else radius
+	rad = mini(rad, int(minf(body.size.x, body.size.y) / 2.0))
+	if not flat:
+		var lip_col := shadow if shadow.a >= 1.0 else body_bg.darkened(0.22)
+		if disabled:
+			lip_col = Color("cdd2da")
+		var ls := StyleBoxFlat.new()
+		ls.bg_color = lip_col
+		ls.set_corner_radius_all(rad)
+		if not disabled:
+			ls.shadow_color = Color(0.06, 0.08, 0.12, 0.18)
+			ls.shadow_size = 14
+			ls.shadow_offset = Vector2(0, 6)
+		ls.draw(get_canvas_item(), Rect2(r.position + Vector2(0, lip), body.size))
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = body_bg
-	var rad: int = int(min(r.size.x, r.size.y) / 2.0) if shape == "circle" else radius
 	sb.set_corner_radius_all(rad)
 	if border.a > 0:
 		sb.set_border_width_all(5)
 		sb.border_color = border
-	if not down and not disabled:
-		sb.shadow_color = shadow
-		sb.shadow_size = 0
-		sb.shadow_offset = Vector2(0, 7)
-		var sh := sb.duplicate() as StyleBoxFlat
-		sh.bg_color = shadow
-		sh.border_color = Color(0, 0, 0, 0)
-		sh.draw(get_canvas_item(), Rect2(r.position + Vector2(0, 7), r.size))
-	sb.draw(get_canvas_item(), Rect2(r.position + off, r.size))
+	sb.draw(get_canvas_item(), body)
+	# Brillo arriba, para que se vea "gordito"
+	if not flat and not disabled and body_bg.get_luminance() < 0.92:
+		var gl := StyleBoxFlat.new()
+		gl.bg_color = Color(1, 1, 1, 0.2)
+		var gh := minf(body.size.y * 0.22, 26.0)
+		gl.set_corner_radius_all(int(gh / 2.0))
+		var gx := body.size.x * (0.22 if shape == "circle" else 0.08)
+		gl.draw(get_canvas_item(), Rect2(body.position + Vector2(gx, 6), Vector2(body.size.x - gx * 2.0, gh)))
 
-	var c := r.get_center() + off
+	var c := body.get_center()
 	if selected:
 		var sel := StyleBoxFlat.new()
 		sel.draw_center = false
 		sel.set_border_width_all(6)
 		sel.border_color = Color("f2b705")
 		sel.set_corner_radius_all(rad)
-		sel.draw(get_canvas_item(), Rect2(r.position + off, r.size))
+		sel.draw(get_canvas_item(), body)
+	var font: Font = Game.font_bold
 	if tex != null:
-		var ts := minf(r.size.x * 0.5, r.size.y * 0.42)
-		draw_texture_rect(tex, Rect2(Vector2(c.x - ts / 2.0, r.position.y + off.y + 12), Vector2(ts, ts)), false)
+		var ts := minf(body.size.x * 0.5, body.size.y * 0.42)
+		draw_texture_rect(tex, Rect2(Vector2(c.x - ts / 2.0, body.position.y + 12), Vector2(ts, ts)), false)
 		var tlines := text.split("\n")
 		for i in tlines.size():
 			var last := i == tlines.size() - 1 and tlines.size() > 1
-			draw_string(get_theme_default_font(), Vector2(r.position.x, r.position.y + off.y + 12 + ts + 8 + font_size + i * font_size * 1.15), tlines[i], HORIZONTAL_ALIGNMENT_CENTER, r.size.x, font_size, sub_color if last else fg)
+			_line(font, body, body.position.y + 12 + ts + 8 + font_size + i * font_size * 1.15, tlines[i], sub_color if last else fg)
 	elif icon != "":
-		var isz: float = min(r.size.x, r.size.y) * (0.42 if text == "" else 0.3)
+		var isz: float = minf(body.size.x, body.size.y) * (0.42 if text == "" else 0.3)
 		var ic: Vector2 = c if text == "" else c - Vector2(0, isz * 0.45)
 		_draw_icon(icon, ic, isz)
 	if text != "" and tex == null:
-		var font := get_theme_default_font()
-		var col := fg if not disabled else Color("6b7685")
+		var col := fg if not disabled else Color("8a93a1")
 		var lines := text.split("\n")
 		var lh := font_size * 1.1
 		var y0 := c.y - lh * (lines.size() - 1) / 2.0 + font_size * 0.35
 		if icon != "":
-			y0 += min(r.size.x, r.size.y) * 0.2
+			y0 += minf(body.size.x, body.size.y) * 0.2
 		for i in lines.size():
-			draw_string(font, Vector2(r.position.x, y0 + i * lh), lines[i], HORIZONTAL_ALIGNMENT_CENTER, r.size.x, font_size, col)
+			_line(font, body, y0 + i * lh, lines[i], col)
 	if overlay_text != "":
 		var ob := StyleBoxFlat.new()
 		ob.bg_color = overlay_color
 		ob.set_corner_radius_all(rad)
-		ob.draw(get_canvas_item(), Rect2(r.position + off, r.size))
-		draw_string(get_theme_default_font(), Vector2(r.position.x, c.y + 18), overlay_text, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 52, Color.WHITE)
+		ob.draw(get_canvas_item(), body)
+		draw_string(font, Vector2(body.position.x, c.y + 18), overlay_text, HORIZONTAL_ALIGNMENT_CENTER, body.size.x, 52, Color.WHITE)
 	if badge >= 0:
 		var bc := Vector2(r.end.x - 8, r.position.y + 8)
-		draw_circle(bc, 20, Color("1b2430"))
-		draw_string(get_theme_default_font(), Vector2(bc.x - 20, bc.y + 8), str(badge), HORIZONTAL_ALIGNMENT_CENTER, 40, 22, Color.WHITE)
+		draw_circle(bc, 22, Color.WHITE)
+		draw_circle(bc, 19, Color("1b2430"))
+		draw_string(font, Vector2(bc.x - 20, bc.y + 8), str(badge), HORIZONTAL_ALIGNMENT_CENTER, 40, 22, Color.WHITE)
+
+
+## Una línea de texto centrada; si tiene "●" dibuja una moneda en su lugar
+func _line(font: Font, area: Rect2, y: float, line: String, col: Color) -> void:
+	if not line.contains("●"):
+		draw_string(font, Vector2(area.position.x, y), line, HORIZONTAL_ALIGNMENT_CENTER, area.size.x, font_size, col)
+		return
+	var parts := line.split("●", true, 1)
+	var pre := parts[0].strip_edges()
+	var post := parts[1].strip_edges()
+	var gap := font_size * (1.3 if pre != "" else 1.1)
+	var w_pre := font.get_string_size(pre, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var w_post := font.get_string_size(post, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var x := area.position.x + (area.size.x - w_pre - gap - w_post) / 2.0
+	draw_string(font, Vector2(x, y), pre, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, col)
+	var coin_x := x + w_pre + (gap / 2.0 if pre != "" else font_size * 0.4)
+	Coin.paint(self, Vector2(coin_x, y - font_size * 0.36), font_size * 0.42)
+	draw_string(font, Vector2(x + w_pre + gap, y), post, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, col)
 
 
 func _draw_icon(kind: String, c: Vector2, s: float) -> void:

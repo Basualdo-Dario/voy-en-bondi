@@ -57,6 +57,8 @@ scripts/world/build.gd   ayudantes para armar todo con formas simples
 scripts/world/characters.gd  los personajes
 scripts/ui/touch_button.gd   botones que aceptan varios dedos a la vez
 scripts/ui/meter.gd          las barras (vergüenza, aire, forcejeo, equilibrio...)
+scripts/ui/coin.gd           la moneda dibujada
+assets/fonts/            la letra Fredoka (licencia libre OFL)
 docs/diseno.md           el documento de diseño completo
 CLAUDE.md                contexto para seguir trabajando con Claude Code
 ```

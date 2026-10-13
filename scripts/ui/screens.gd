@@ -208,7 +208,18 @@ func _menu(v: VBoxContainer) -> void:
 	_msg(v)
 
 
-func _row(icon: String, title: String, sub: String, extra: String, btn: TouchButton) -> PanelContainer:
+## Nivel de una habilidad: 5 segmentos, verdes los que ya tenés
+func _level_bar(level: int) -> Meter:
+	var m := Meter.new(14)
+	m.bg = Color(0, 0, 0, 0)
+	m.custom_minimum_size = Vector2(220, 14)
+	m.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	for i in Game.MAX_LEVEL:
+		m.zones.append({"a": i * 0.2 + 0.015, "w": 0.17, "round": true, "c": Color("3fae5a") if i < level else Color("dfe4ea")})
+	return m
+
+
+func _row(icon: String, title: String, sub: String, extra, btn: TouchButton) -> PanelContainer:
 	var card: PanelContainer = trip._panel(C_SOFT, 26)
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 16)
@@ -224,7 +235,9 @@ func _row(icon: String, title: String, sub: String, extra: String, btn: TouchBut
 	var sl := trip._label(sub, 19, C_MUTED)
 	sl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tv.add_child(sl)
-	if extra != "":
+	if extra is Control:
+		tv.add_child(extra)
+	elif extra != "":
 		tv.add_child(trip._label(extra, 22, Color("2e7d32")))
 	h.add_child(tv)
 	btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -260,14 +273,13 @@ func _skills(v: VBoxContainer) -> void:
 	for s in Game.SKILLS:
 		var id: String = s["id"]
 		var l := Game.skill_level(id)
-		var pips := "●".repeat(l) + "○".repeat(Game.MAX_LEVEL - l)
 		var maxed := l >= Game.MAX_LEVEL
 		var b: TouchButton
 		if maxed:
 			b = _buy_button("up:" + id, "Al máximo", -1, false)
 		else:
 			b = _buy_button("up:" + id, "Mejorar", Game.skill_cost(id), Game.profile["coins"] >= Game.skill_cost(id))
-		v.add_child(_row(icons[id], s["name"], Game.skill_effect(id), pips, b))
+		v.add_child(_row(icons[id], s["name"], Game.skill_effect(id), _level_bar(l), b))
 	_msg(v)
 
 
