@@ -4,6 +4,7 @@ Cada cambio del juego, del más nuevo al más viejo. El detalle completo y la fo
 
 ## 2026-10-13
 
+- **Choro con tiempo:** el forcejeo dura como máximo 5 segundos (con cuenta regresiva). Si no llevás la barra a tu zona verde a tiempo, te roba.
 - **Música cumbia villera:** nueva canción de 38 segundos con teclado berreta con vibrato, guacharaca al frente, timbales con redobles, cencerro y bajo. Dos partes para que no sea tan repetitiva.
 - **Murmullo de gente:** se sacó el balbuceo de los personajes (sonaba robótico) y en su lugar suena de fondo, durante el viaje, una grabación real de gente hablando bajito.
 - **Sonido:** efectos para botones, compras, monedas, frenadas (con bocinazo del chofer), caídas, el "!" de aviso, el forcejeo con el choro, el sueño, aguantar la respiración, el vendedor, los ítems y el fin del viaje. Motor del colectivo de fondo que baja de tono en las frenadas. Música de cumbia chiptune en el menú (más bajita en el viaje). Botón para silenciar en el menú y en la pausa (se guarda).

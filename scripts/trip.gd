@@ -8,6 +8,7 @@ const WALK_X := -0.3
 const Z_MIN := -10.5
 const Z_MAX := 1.5
 const TRIG_Z := PIBE_Z - 0.6
+const CHORO_SECS := 5.0          # tiempo para ganarle el forcejeo al choro
 # Asientos ocupados por pasajeros comunes (x, z)
 const SEATS := [Vector2(-1.12, -.8), Vector2(-1.12, -3.8), Vector2(1.12, -5.3), Vector2(-1.12, -6.8), Vector2(1.12, -8.3), Vector2(-1.12, -9.8), Vector2(-1.12, .7)]
 
@@ -23,7 +24,7 @@ const TUT := {
 	"tilt": ["¡Frenada!", "Mantené apretada la flecha de abajo del lado contrario a la caída (o inclina el celular) para que la bolita vuelva al centro. El colectivo se mueve todo el tiempo."],
 	"olor": ["¡El oloroso!", "Mantené apretado AGUANTÁ hasta que su cara llegue al final. Soltá solo cuando la rayita esté en la zona verde: ahí respirás, pero la zona se achica. Al volver a apretar, la verde cambia de lugar. El perfume de al lado te deja respirar 3 segundos."],
 	"vend": ["¡El vendedor ambulante!", "Te va a ofrecer cosas 3 veces seguidas. Tocá NO, GRACIAS cada vez antes de que se acabe el tiempo. O usá la billetera de al lado: le comprás algo barato y se va."],
-	"choro": ["¡Te quiere robar!", "Tocá rápido para llevar la barra a tu lado antes de que el choro la lleve al suyo. O tocá el candado de al lado y se va con las manos vacías."],
+	"choro": ["¡Te quiere robar!", "Tocá rápido para llevar la barra a la zona verde de tu lado. Tenés 5 segundos: si no llegás, o si el choro la lleva al suyo, te roba. O tocá el candado de al lado y se va con las manos vacías."],
 	"eleccion": ["Subió una embarazada", "Elegí: cederle tu lugar (perdés la manija y te cuesta más el equilibrio) o hacerte el dormido cada vez que pase."],
 	"fingir": ["¡Hacete el dormido!", "Mantené apretado y soltá cuando la rayita esté en la zona verde. Si tomaste café hace poco, va más lenta."],
 	"sueno": ["¡Te estás durmiendo!", "Tocá rápido: cada toque sube la rayita y el sueño la baja. Cuando se acabe el tiempo tiene que estar en la zona verde. O tomate el café de al lado y te despertás al toque."],
@@ -903,7 +904,9 @@ func _start_ev_now(type: String, w) -> void:
 		"choro":
 			ev["p"] = 0.5
 			marker.visible = true
-			v.add_child(_row3("Vos", "Forcejeo", "Choro"))
+			var rc := _row3("Vos", "%d s" % int(CHORO_SECS), "Choro")
+			v.add_child(rc)
+			ev["time_l"] = rc.get_child(1)
 			var tm := Meter.new(30)
 			tm.bg = Color("f1ece6")
 			tm.zones = [{"a": 0.0, "w": 0.08, "c": C_GREEN}, {"a": 0.92, "w": 0.08, "c": C_PINK}]
@@ -1586,17 +1589,20 @@ func _step_event(dt: float) -> void:
 			ev["tug_m"].set_values({"needle": ev["p"]})
 			var r: Node3D = ev["w"]["d"]["root"]
 			marker.position = r.position + Vector3(0, 2.3 + sin(t * 6) * .05, 0)
+			# Tenés CHORO_SECS segundos para llevar la barra a tu zona verde
+			var left_c: float = CHORO_SECS - ev["t"]
+			ev["time_l"].text = "%d s" % ceili(maxf(0, left_c))
 			if ev["p"] <= 0.04:
 				toast("¡Te lo sacaste de encima!")
 				end_ev(true)
-			elif ev["p"] >= 0.96:
+			elif ev["p"] >= 0.96 or left_c <= 0:
 				var lost := mini(30, Game.profile["coins"])
 				Game.profile["coins"] -= lost
 				robbed += lost
 				update_coins()
 				end_ev(false)
 				Audio.play("coins_lost")
-				add_shame("robo", "Te robaron 30 monedas.")
+				add_shame("robo", "Te robaron 30 monedas." if left_c > 0 else "Se te acabó el tiempo: te robaron 30 monedas.")
 		"eleccion":
 			var left2: float = ev["limit"] - ev["t"]
 			ev["time_l"].text = "%d s" % ceili(maxf(0, left2))
