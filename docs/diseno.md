@@ -204,7 +204,8 @@ Los pasajeros de relleno van con colores apagados (cada uno tiene dos variantes)
 
 - **Efectos:** de bancos con licencia CC0 (Kenney y OpenGameArt), listados en `assets/audio/CREDITOS.md`. Cada acción importante tiene su sonido: botones, compras, frenadas (a veces con bocinazo), caídas, el aviso "!", ganar o perder un evento y el fin del viaje.
 - **Ambiente:** el motor del colectivo suena durante el viaje y baja de tono en las frenadas.
-- **Música:** cumbia chiptune en loop, generada por código. Más fuerte en el menú y más bajita en el viaje.
+- **Música:** cumbia villera instrumental en loop (teclado con vibrato, guacharaca, timbales y bajo), generada por código. Más fuerte en el menú y más bajita en el viaje.
+- **Voces:** cada personaje balbucea con su voz cuando se acerca (con el "!"): el choro susurra, el oloroso habla grave y lento, la embarazada con voz femenina y el vendedor rápido como charlatán. Los pasajeros comunes murmuran bajito de fondo y se escuchan desde su lugar en el colectivo.
 - **Silenciar:** botón en el menú y en la pausa; se guarda en la partida.
 - **Pendiente:** no hay sonidos CC0 buenos de vómito, bostezo ni frenada con chirrido; por ahora se usan otros parecidos.
 

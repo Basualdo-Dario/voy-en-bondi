@@ -29,6 +29,15 @@ const TUT := {
 	"sueno": ["¡Te estás durmiendo!", "Tocá rápido: cada toque sube la rayita y el sueño la baja. Cuando se acabe el tiempo tiene que estar en la zona verde. O tomate el café de al lado y te despertás al toque."],
 }
 
+# Voz de cada personaje cuando se acerca: [voz, sílabas, tono, pausa entre sílabas, volumen]
+const WALKER_VOICE := {
+	"olor": ["male_deep", 4, 0.8, 0.17, 0.0],      # grave y lento
+	"choro": ["whisper", 5, 1.0, 0.09, 3.0],       # te habla bajito
+	"emb": ["female_standard", 4, 1.05, 0.12, 0.0],
+	"vend": ["quick", 7, 1.1, 0.07, 2.0],          # charlatán
+}
+const CROWD_VOICES := ["male_standard", "female_light", "male_deep", "female_standard"]
+
 const OFFERS := ["¿Alfajor? ¡Dos por mil!", "¿Pastillitas de menta?", "¿Medias? Tres pares, una ganga", "¿Un cargador para el celu?", "¿Curitas, pañuelitos?", "¿Una birome de tres colores?"]
 const LAST_OFFER := "¡Última oferta, pibe!"
 
@@ -38,6 +47,8 @@ var outside: Array = []
 var pibe: Dictionary
 var walkers: Array = []
 var seated_nodes: Array = []
+var crowd: Array = []            # pasajeros comunes (sentados y parados) que murmuran de fondo
+var murmur_t := 3.0
 var marker: Label3D
 var stink_parts: Array = []
 var fly_parts: Array = []
@@ -236,6 +247,7 @@ func _build_world() -> void:
 		var c := _passenger(k[0], k[1])
 		c["root"].rotation.y = PI
 		seated_nodes.append(c["root"])
+		crowd.append(c["root"])
 	_shuffle_seats()
 	# Y algunos parados del lado derecho, agarrados de la manija, lejos del pasillo
 	var standing := [["oficinista", 1, -2.0], ["obrero", 1, -3.4], ["estudiante", 0, -4.6]]
@@ -244,6 +256,7 @@ func _build_world() -> void:
 		c["root"].position = Vector3(.92, 0, k[2])
 		c["root"].rotation.y = PI
 		Characters.set_grab(c, true)
+		crowd.append(c["root"])
 
 	marker = Label3D.new()
 	marker.text = "!"
@@ -1429,6 +1442,12 @@ func _step(dt: float) -> void:
 
 	_step_walkers(dt)
 
+	# Murmullo de fondo: cada tanto algún pasajero dice algo bajito
+	murmur_t -= dt
+	if murmur_t <= 0:
+		murmur_t = randf_range(2.5, 5.5)
+		Audio.babble(CROWD_VOICES.pick_random(), randi_range(3, 6), randf_range(0.9, 1.1), -9.0, crowd.pick_random(), randf_range(0.1, 0.14))
+
 	# El director: nunca más de 2 segundos sin evento
 	if ev == null and vend == null and t - last_ev_end > 2.0:
 		var cand := walkers.filter(func(w): return not w["parked"] and w["state"] == "walk" and w["wait"] <= 0 and w["cool"] <= 0 and not (w["type"] == "choro" and lock_t > 0))
@@ -1447,6 +1466,9 @@ func _step(dt: float) -> void:
 		nexts.sort_custom(func(a, c): return a["z"] > c["z"])
 		if nexts.size() > 0 and not marker.visible:
 			Audio.play("alert", -4.0)
+			# El que se acerca murmura con su voz
+			var vo: Array = WALKER_VOICE[nexts[0]["type"]]
+			Audio.babble(vo[0], vo[1], vo[2], vo[4], nexts[0]["d"]["root"], vo[3])
 		marker.visible = nexts.size() > 0
 		if nexts.size() > 0:
 			var r: Node3D = nexts[0]["d"]["root"]

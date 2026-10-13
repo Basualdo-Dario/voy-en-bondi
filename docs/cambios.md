@@ -4,6 +4,8 @@ Cada cambio del juego, del más nuevo al más viejo. El detalle completo y la fo
 
 ## 2026-10-13
 
+- **Música cumbia villera:** nueva canción de 38 segundos con teclado berreta con vibrato, guacharaca al frente, timbales con redobles, cencerro y bajo. Dos partes para que no sea tan repetitiva.
+- **Voces:** cada personaje murmura con su voz cuando se acerca (el choro susurra, el oloroso grave y lento, la embarazada, el vendedor rápido). Los pasajeros comunes murmuran bajito de fondo, desde su asiento.
 - **Sonido:** efectos para botones, compras, monedas, frenadas (con bocinazo del chofer), caídas, el "!" de aviso, el forcejeo con el choro, el sueño, aguantar la respiración, el vendedor, los ítems y el fin del viaje. Motor del colectivo de fondo que baja de tono en las frenadas. Música de cumbia chiptune en el menú (más bajita en el viaje). Botón para silenciar en el menú y en la pausa (se guarda).
 - **Modo historia (etapa 1):** dos capítulos ("La moto" y "Mudarse cerca") con 8 barrios. Cada barrio es una semana con su línea de colectivo (otro color, otro cartel, algunos de noche). Pantalla de Mapa con la ciudad, los barrios y el recorrido de la semana. Carteles de historia al empezar capítulos y barrios, y finales con remate. Al terminar un barrio: camiseta exclusiva y +200 monedas; al terminar un capítulo, +500. La dificultad sube por barrio. Las partidas guardadas siguen en el barrio 1.
 - **Pasajeros nuevos:** la abuela, el oficinista, el estudiante y el obrero, con colores apagados y dos variantes cada uno. Siete van sentados (cambian de asiento en cada viaje) y tres parados agarrados de la manija.

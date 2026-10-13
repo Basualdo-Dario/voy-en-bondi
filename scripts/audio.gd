@@ -12,8 +12,11 @@ const SFX := [
 const VOL := {"engine": -14.0, "ui_click": -6.0, "tap": -8.0, "tug1": -4.0, "tug2": -4.0, "horn": -8.0, "door": -6.0, "start": -8.0, "jolt": -4.0}
 const MUSIC_MENU_DB := -10.0
 const MUSIC_TRIP_DB := -19.0
+# Voces para el balbuceo de los personajes: 4 sílabas de cada una en assets/audio/voices/
+const VOICES := ["whisper", "male_deep", "male_standard", "female_standard", "female_light", "quick"]
 
 var streams := {}
+var voices := {}
 var pool: Array[AudioStreamPlayer] = []
 var music := AudioStreamPlayer.new()
 var engine := AudioStreamPlayer.new()
@@ -24,6 +27,10 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	for id in SFX:
 		streams[id] = load(DIR + id + ".ogg")
+	for v in VOICES:
+		voices[v] = []
+		for n in range(1, 5):
+			voices[v].append(load("%svoices/%s_%d.ogg" % [DIR, v, n]))
 	for i in 10:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
@@ -56,6 +63,42 @@ func play(id: String, db := 0.0, pitch := 1.0, pitch_var := 0.06) -> void:
 			p.pitch_scale = pitch * randf_range(1.0 - pitch_var, 1.0 + pitch_var)
 			p.play()
 			return
+
+
+## Balbuceo tipo videojuego: encadena sílabas al azar de una voz. Si se pasa "at" (un personaje),
+## suena desde su lugar en el colectivo (más lejos = más bajito).
+func babble(voice: String, syllables: int, pitch := 1.0, db := 0.0, at: Node3D = null, gap := 0.11) -> void:
+	if muted or not voices.has(voice):
+		return
+	var player: Node = null
+	if at != null:
+		player = at.get_node_or_null("Voz")
+		if player == null:
+			var p3 := AudioStreamPlayer3D.new()
+			p3.name = "Voz"
+			p3.position = Vector3(0, 1.6, 0)
+			p3.unit_size = 4.0
+			p3.max_polyphony = 2
+			at.add_child(p3)
+			player = p3
+	for i in syllables:
+		var p = player
+		if p == null:
+			p = _free_player()
+		if p == null or muted or not is_instance_valid(p):
+			return
+		p.stream = voices[voice].pick_random()
+		p.pitch_scale = pitch * randf_range(0.9, 1.12)
+		p.volume_db = db
+		p.play()
+		await get_tree().create_timer(gap * randf_range(0.8, 1.3)).timeout
+
+
+func _free_player() -> AudioStreamPlayer:
+	for p in pool:
+		if not p.playing:
+			return p
+	return null
 
 
 ## Prende o apaga el motor del colectivo (suena de fondo durante el viaje)
