@@ -209,6 +209,16 @@ func _draw_icon(kind: String, c: Vector2, s: float) -> void:
 				draw_rect(Rect2(body.position + Vector2((0.14 + i * 0.4) * s, 0.12 * s), Vector2(0.3, 0.26) * s), Color("dff1fb"))
 			for x in [-0.38, 0.38]:
 				draw_circle(c + Vector2(x, 0.38) * s, 0.15 * s, ink)
+		"gear":
+			# Engranaje: 8 dientes alrededor de una rueda con agujero
+			var pts := PackedVector2Array()
+			var teeth := 8
+			for i in teeth * 4:
+				var a := TAU * i / (teeth * 4.0)
+				var r: float = 0.62 if (i % 4) in [1, 2] else 0.46
+				pts.append(c + Vector2(cos(a), sin(a)) * r * s)
+			draw_colored_polygon(pts, ink)
+			draw_circle(c, 0.2 * s, bg if bg.a > 0 else Color.WHITE)
 		"sound", "mute":
 			var spk := PackedVector2Array([c + Vector2(-0.6, -0.2) * s, c + Vector2(-0.3, -0.2) * s, c + Vector2(0.05, -0.55) * s,
 				c + Vector2(0.05, 0.55) * s, c + Vector2(-0.3, 0.2) * s, c + Vector2(-0.6, 0.2) * s])

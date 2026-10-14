@@ -28,24 +28,28 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	for id in SFX:
 		streams[id] = load(DIR + id + ".ogg")
+	# Canales: "Musica" y "Efectos" (con su volumen en configuración); "Gente" va dentro de Efectos
+	_add_bus("Musica", "Master")
+	_add_bus("Efectos", "Master")
+	var gente := _add_bus("Gente", "Efectos")
+	# La gente suena "apagada", como desde los asientos: filtro de agudos
+	var lp := AudioEffectLowPassFilter.new()
+	lp.cutoff_hz = 1800.0
+	AudioServer.add_bus_effect(gente, lp)
 	for i in 10:
 		var p := AudioStreamPlayer.new()
+		p.bus = "Efectos"
 		add_child(p)
 		pool.append(p)
 	engine.stream = _loop_ogg("engine")
 	engine.volume_db = VOL["engine"]
+	engine.bus = "Efectos"
 	add_child(engine)
-	# La gente suena "apagada", como desde los asientos: va por un canal con filtro de agudos
-	var bus := AudioServer.bus_count
-	AudioServer.add_bus(bus)
-	AudioServer.set_bus_name(bus, "Gente")
-	var lp := AudioEffectLowPassFilter.new()
-	lp.cutoff_hz = 1800.0
-	AudioServer.add_bus_effect(bus, lp)
 	crowd.stream = _loop_ogg("crowd")
 	crowd.bus = "Gente"
 	crowd.volume_db = CROWD_DB
 	add_child(crowd)
+	music.bus = "Musica"
 	var mus: AudioStreamWAV = load(DIR + "music_cumbia.wav")
 	mus.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	mus.loop_begin = 0
@@ -53,9 +57,27 @@ func _ready() -> void:
 	music.stream = mus
 	music.volume_db = MUSIC_MENU_DB
 	add_child(music)
-	set_muted(bool(Game.profile.get("mute", false)))
+	apply_settings()
 	if not Game.testing:
 		music.play()
+
+
+func _add_bus(bus_name: String, send: String) -> int:
+	var i := AudioServer.bus_count
+	AudioServer.add_bus(i)
+	AudioServer.set_bus_name(i, bus_name)
+	AudioServer.set_bus_send(i, send)
+	return i
+
+
+## Aplica el volumen de música y efectos y el silencio de la configuración
+func apply_settings() -> void:
+	for b in [["Musica", "music"], ["Efectos", "sfx"]]:
+		var v: float = Game.setting(b[1])
+		var idx := AudioServer.get_bus_index(b[0])
+		AudioServer.set_bus_volume_db(idx, linear_to_db(maxf(v, 0.001)))
+		AudioServer.set_bus_mute(idx, v <= 0.01)
+	set_muted(bool(Game.setting("mute")))
 
 
 func _loop_ogg(id: String) -> AudioStreamOggVorbis:
@@ -107,7 +129,7 @@ func music_for_trip(trip: bool) -> void:
 
 func set_muted(m: bool) -> void:
 	muted = m
-	Game.profile["mute"] = m
+	Game.profile["settings"]["mute"] = m
 	AudioServer.set_bus_mute(0, m)
 	if m:
 		engine.stop()

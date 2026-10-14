@@ -35,6 +35,7 @@ Los números de economía están en `scripts/game.gd`. **Antes de cambiar reglas
 - En GDScript, cuando un valor viene de un Dictionary, declarar el tipo explícito (`var x: float = d["k"]`) en vez de `:=`, porque si no falla el parseo.
 - La interfaz se arma por código (no hay escenas .tscn de UI).
 - Estilo visual "juego móvil vivo": letra Fredoka (`Game.font` y `Game.font_bold`; `_label` pone negrita desde 30 px), botones con relieve (el color `shadow` del `TouchButton` es el canto; transparente = botón plano) y tarjetas blancas con sombra suave (`_style`). En el texto de un botón, "●" se dibuja como moneda (`Coin`).
+- Configuración: `Game.setting("clave")` y `Game.set_setting(...)` (valores por defecto en `DEFAULT_SETTINGS`). El viaje de práctica usa `Game.start_practice()`/`end_practice()`: juega con una copia de la partida y `go_menu` restaura la real.
 - Con `--autotest` o `--shot`, `Game.testing` está prendido: se juega con una partida en memoria que no se guarda. `--demo` arranca esa partida a mitad de semana (para capturas).
 
 ## Cómo probar sin abrir el editor

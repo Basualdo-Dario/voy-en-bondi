@@ -37,7 +37,7 @@ Esto se hace una sola vez:
    - *Java SDK Path*: la carpeta donde se instaló el JDK (algo como `C:\Program Files\Eclipse Adoptium\jdk-17...`);
    - *Android SDK Path*: normalmente `C:\Users\TU_USUARIO\AppData\Local\Android\Sdk`.
 4. **Plantillas de exportación:** **Editor → Manage Export Templates → Download and Install**.
-5. **Preset de Android:** **Project → Export → Add... → Android**. Dejá todo como viene.
+5. **Preset de Android:** **Project → Export → Add... → Android**. Dejá todo como viene, salvo en **Permissions**: marcá **Vibrate** (si no, la vibración de configuración no funciona en el celular).
 
 Para instalarlo en el celular:
 

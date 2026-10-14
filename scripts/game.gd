@@ -156,7 +156,67 @@ func fresh_profile() -> Dictionary:
 		"tut_done": false,
 		"story_seen": {},      # carteles de historia ya mostrados
 		"story_queue": [],     # carteles pendientes (finales de barrio y capítulo)
+		"settings": DEFAULT_SETTINGS.duplicate(),
 	}
+
+
+# ---------- Configuración (pantalla del engranaje) ----------
+
+const DEFAULT_SETTINGS := {
+	"lang": "es",        # "es" o "en"
+	"music": 0.8,        # volumen de la música (0 a 1)
+	"sfx": 0.9,          # volumen de efectos y ambiente (0 a 1)
+	"mute": false,
+	"tilt": true,        # controlar el equilibrio inclinando el celular
+	"tilt_sens": 1.0,    # sensibilidad de la inclinación (0,5 a 2)
+	"vibra": true,       # vibrar al caerte, en frenadas y robos
+}
+
+
+func setting(key: String):
+	return profile["settings"].get(key, DEFAULT_SETTINGS[key])
+
+
+func set_setting(key: String, value) -> void:
+	profile["settings"][key] = value
+	save()
+
+
+## Vibración corta del celular (si está prendida en configuración)
+func vibrate(ms: int) -> void:
+	if setting("vibra") and not testing:
+		Input.vibrate_handheld(ms)
+
+
+# ---------- Viaje de práctica (tutorial desde configuración) ----------
+# Se juega con una copia de la partida: al volver al menú se restaura la de verdad y no se guarda nada.
+
+var practice := false
+var _saved_profile := {}
+
+
+func start_practice() -> void:
+	_saved_profile = profile.duplicate(true)
+	practice = true
+	profile["barrio"] = 0
+	profile["day"] = 0
+	profile["trip"] = 0
+	profile["tut_seen"] = {}
+	profile["tut_done"] = false
+	# Para probar los ítems: de todos, hasta el límite del día
+	for it in ITEMS:
+		profile["inv"][it["id"]] = it["lim"]
+		profile["used"][it["id"]] = 0
+
+
+func end_practice() -> void:
+	if not practice:
+		return
+	var st: Dictionary = profile["settings"]   # lo que se cambió en la pausa (sonido) se conserva
+	profile = _saved_profile
+	profile["settings"] = st
+	_saved_profile = {}
+	practice = false
 
 
 func load_profile() -> void:
@@ -179,18 +239,29 @@ func load_profile() -> void:
 	for group in ["skills", "inv", "used"]:
 		for k in profile[group].keys():
 			profile[group][k] = int(profile[group][k])
+	# Configuración: completar lo que falte (partidas viejas guardaban "mute" suelto)
+	var st: Dictionary = DEFAULT_SETTINGS.duplicate()
+	if typeof(profile.get("settings")) == TYPE_DICTIONARY:
+		st.merge(profile["settings"], true)
+	if profile.has("mute"):
+		st["mute"] = bool(profile["mute"])
+		profile.erase("mute")
+	profile["settings"] = st
 
 
 func save() -> void:
-	if testing:
+	if testing or practice:
 		return
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(profile))
 
 
+## Borra el progreso y empieza de cero (la configuración se mantiene)
 func reset_progress() -> void:
+	var st: Dictionary = profile["settings"].duplicate()
 	profile = fresh_profile()
+	profile["settings"] = st
 	save()
 
 

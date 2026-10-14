@@ -392,11 +392,11 @@ func _build_hud() -> void:
 	pause.icon = "pause"
 	top.add_child(pause)
 	game_nodes.append(pause)
-	# Sonido prendido/apagado (solo en el menú; en el viaje está en la pausa)
-	var snd := _tb("snd", "", Vector2(76, 76))
-	top.add_child(snd)
-	ui["snd"] = snd
-	_upd_snd()
+	# Engranaje de configuración (solo en el menú; en el viaje, la pausa tiene el botón de sonido)
+	var gear := _tb("go:config", "", Vector2(76, 76))
+	gear.icon = "gear"
+	top.add_child(gear)
+	ui["gear"] = gear
 	var trip_p := _panel()
 	trip_p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var trip_v := VBoxContainer.new()
@@ -525,15 +525,10 @@ func _build_hud() -> void:
 	ui["modal"] = modal
 
 
-func _upd_snd() -> void:
-	ui["snd"].icon = "mute" if Audio.muted else "sound"
-	ui["snd"].queue_redraw()
-
-
 func _set_mode(mode: String) -> void:
 	for n in game_nodes:
 		n.visible = mode == "game"
-	ui["snd"].visible = mode != "game"
+	ui["gear"].visible = mode != "game"
 	Audio.music_for_trip(mode == "game")
 	Audio.set_engine(mode == "game")
 	ui["spacer_top"].visible = mode != "game"
@@ -544,6 +539,7 @@ func _set_mode(mode: String) -> void:
 ## Vuelve al menú (o abre tienda, habilidades o camisetas)
 func go_menu(screen := "menu") -> void:
 	phase = "screen"
+	Game.end_practice()   # si venías de un viaje de práctica, vuelve tu partida de verdad
 	hide_modal()
 	ev = null
 	vend = null
@@ -712,7 +708,7 @@ func modal_open() -> bool:
 func reset_trip() -> void:
 	var p := Game.profile
 	var tr: Dictionary = Game.TRIPS[p["trip"]]
-	ui["trip_k"].text = ("Línea %s · %s · Viaje %d de 4" % [Game.barrio()["line"], Game.day_name(), p["trip"] + 1]).to_upper()
+	ui["trip_k"].text = "VIAJE DE PRÁCTICA" if Game.practice else ("Línea %s · %s · Viaje %d de 4" % [Game.barrio()["line"], Game.day_name(), p["trip"] + 1]).to_upper()
 	ui["trip"].text = "%s → %s" % [tr["from"], tr["to"]]
 	phase = "start"
 	t = 0.0
@@ -767,7 +763,10 @@ func reset_trip() -> void:
 	_upd_bars()
 	update_coins()
 	var body := "Llegá sin pasar vergüenza. Los personajes van y vienen por el pasillo: cuando pasan cerca tuyo, arranca su evento." if (p["trip"] == 0 and Game.first_day()) else ""
-	show_modal("%s · Viaje %d de 4" % [Game.day_name(), p["trip"] + 1], "%s → %s" % [tr["from"], tr["to"]], body, [], [["start", "¡ARRANCAR!", 420, C_YELLOW], ["shopfirst", "Tienda", 130, Color("eef1f5"), "shop"]], true)
+	if Game.practice:
+		show_modal("Viaje de práctica", "Tutorial", "Te van a aparecer todos los carteles que explican los eventos. Tenés de todos los ítems para probar. Nada de esto cuenta para tu partida.", [], [["start", "¡ARRANCAR!", 420, C_YELLOW]], true)
+	else:
+		show_modal("%s · Viaje %d de 4" % [Game.day_name(), p["trip"] + 1], "%s → %s" % [tr["from"], tr["to"]], body, [], [["start", "¡ARRANCAR!", 420, C_YELLOW], ["shopfirst", "Tienda", 130, Color("eef1f5"), "shop"]], true)
 	if autotest:
 		hide_modal()
 		phase = "play"
@@ -1132,6 +1131,7 @@ func start_tilt() -> void:
 		tilt = {"t": 0.0, "dur": 3.2, "dir": dir, "amp": amp}
 		seen["tilt"] = true
 		Audio.play("jolt")
+		Game.vibrate(60)
 		if randf() < 0.35:
 			Audio.play("horn")
 		toast("¡Curva! Te vas a la derecha" if dir > 0 else "¡Frenada! Te vas a la izquierda"))
@@ -1139,6 +1139,7 @@ func start_tilt() -> void:
 
 func fall(dir: float) -> void:
 	Audio.play("fall")
+	Game.vibrate(250)
 	fall_t = 1.4
 	fall_dir = dir
 	tilt = null
@@ -1160,6 +1161,12 @@ func end_trip() -> void:
 	var p := Game.profile
 	var failed := shame >= 100
 	var score := maxi(0, 100 - roundi(shame))
+	if Game.practice:
+		# La práctica no cuenta: al volver al menú se restaura la partida de verdad
+		Audio.play("trip_fail" if failed else "trip_ok")
+		show_modal("Viaje de práctica", "¡Práctica terminada!", "Esto no cuenta para tu partida: tus monedas, ítems y barrio quedan como estaban.",
+			[["Puntaje", str(score)], ["Eventos superados", str(ok_count)]], [["tomenu", "VOLVER AL MENÚ", 460, C_YELLOW]])
+		return
 	var coins := 20 + (0 if failed else score / 2)
 	p["coins"] += coins
 	var tr: Dictionary = Game.TRIPS[p["trip"]]
@@ -1317,9 +1324,11 @@ func _tap(id: String) -> void:
 		"snd":
 			Audio.set_muted(not Audio.muted)
 			Game.save()
-			_upd_snd()
 			if phase == "pause":
 				_show_pause()
+			return
+		"modal_back":
+			hide_modal()
 			return
 		"tutok":
 			hide_modal()
@@ -1602,6 +1611,7 @@ func _step_event(dt: float) -> void:
 				update_coins()
 				end_ev(false)
 				Audio.play("coins_lost")
+				Game.vibrate(300)
 				add_shame("robo", "Te robaron 30 monedas." if left_c > 0 else "Se te acabó el tiempo: te robaron 30 monedas.")
 		"eleccion":
 			var left2: float = ev["limit"] - ev["t"]
@@ -1645,10 +1655,13 @@ func _shot_time() -> float:
 
 func _sensor_ctrl() -> float:
 	# Inclinar el celular: el acelerómetro marca la gravedad sobre el eje X de la pantalla
+	if not Game.setting("tilt"):
+		return 0.0
 	var acc := Input.get_accelerometer()
 	if acc.length() < 1.0:
 		return 0.0
-	var v := -acc.x / 3.5
+	var sens: float = Game.setting("tilt_sens")
+	var v := -acc.x / 3.5 * sens
 	if absf(v) < 0.12:
 		return 0.0
 	return clampf(v, -1.0, 1.0)

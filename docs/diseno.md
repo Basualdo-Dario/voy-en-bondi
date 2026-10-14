@@ -200,13 +200,24 @@ El juego es 3D low-poly: personajes armados con formas simples, colores fuertes 
 Los pasajeros de relleno van con colores apagados (cada uno tiene dos variantes) para que las amenazas resalten. Siete van sentados, mezclados al azar en cada viaje, y tres parados del lado derecho, agarrados de la manija y lejos del pasillo.
 | El vendedor ambulante | Molestia: te ofrece cosas | Remera naranja, gorra roja y bandeja de golosinas colgada del cuello |
 
+## Configuración
+
+Se abre con el engranaje del menú. Todo se guarda en la partida (`settings`) y se mantiene si se reinicia.
+
+- **Idioma:** español o inglés. El inglés todavía no está traducido (próximo paso).
+- **Música y efectos:** volumen por separado, de 0 a 100 %, más un interruptor para silenciar todo.
+- **Inclinar el celular:** prender o apagar el control por inclinación y su sensibilidad (×0,5 a ×2).
+- **Vibración:** al caerte, en frenadas y cuando te roban.
+- **Viaje de práctica:** un viaje con todos los tutoriales y de todos los ítems para probar; al terminar no se guarda nada.
+- **Créditos** y **reiniciar partida** (con cartel de confirmación).
+
 ## Sonido
 
 - **Efectos:** de bancos con licencia CC0 (Kenney y OpenGameArt), listados en `assets/audio/CREDITOS.md`. Cada acción importante tiene su sonido: botones, compras, frenadas (a veces con bocinazo), caídas, el aviso "!", ganar o perder un evento y el fin del viaje.
 - **Ambiente:** el motor del colectivo suena durante el viaje y baja de tono en las frenadas.
 - **Música:** cumbia villera instrumental en loop (teclado con vibrato, guacharaca, timbales y bajo), generada por código. Más fuerte en el menú y más bajita en el viaje.
 - **Gente:** durante el viaje suena de fondo un murmullo real de gente hablando bajito (grabación CC0), con un filtro que lo apaga un poco y un volumen que sube y baja despacio. Los personajes no tienen voz propia (se probó un balbuceo tipo videojuego y sonaba robótico).
-- **Silenciar:** botón en el menú y en la pausa; se guarda en la partida.
+- **Silenciar:** en configuración y en la pausa; se guarda en la partida. La música y los efectos tienen volumen por separado.
 - **Pendiente:** no hay sonidos CC0 buenos de vómito, bostezo ni frenada con chirrido; por ahora se usan otros parecidos.
 
 ## Primera versión (alcance)

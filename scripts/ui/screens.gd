@@ -80,6 +80,8 @@ func render(animate := false) -> void:
 			_skins(v)
 		"mapa":
 			_map(v)
+		"config":
+			_config(v)
 	if animate:
 		wrap.position.y = 1400
 		var tw := create_tween()
@@ -222,6 +224,127 @@ func _menu(v: VBoxContainer) -> void:
 		row.add_child(b)
 	v.add_child(row)
 	_msg(v)
+
+
+# ---------- Configuración ----------
+
+# Rango y paso de los valores que se ajustan con − y +
+const STEPS := {"music": [0.0, 1.0, 0.1], "sfx": [0.0, 1.0, 0.1], "tilt_sens": [0.5, 2.0, 0.25]}
+const CREDITS := "Idea y diseño: Dario.\nProgramación: Dario con Claude.\n\nLetra: Fredoka (licencia OFL).\nEfectos de sonido: Kenney, GGBotNet y Joseph Sardin (BigSoundBank), todos CC0.\nMúsica: hecha para el juego.\n\nClubes, barrios y líneas son inventados."
+
+
+func _config(v: VBoxContainer) -> void:
+	_handle(v)
+	v.add_child(trip._label("Configuración", 44))
+	var lang: String = Game.setting("lang")
+	_set_row(v, "Idioma", [_choice("lang:es", "Español", lang == "es"), _choice("lang:en", "English", lang == "en")])
+	_set_row(v, "Música", _stepper("music"))
+	_set_row(v, "Efectos", _stepper("sfx"))
+	_set_row(v, "Sonido", [_toggle("tog:mute", not Audio.muted)])
+	_set_row(v, "Inclinar el celular", [_toggle("tog:tilt", Game.setting("tilt"))])
+	if Game.setting("tilt"):
+		_set_row(v, "Sensibilidad", _stepper("tilt_sens"))
+	_set_row(v, "Vibración", [_toggle("tog:vibra", Game.setting("vibra"))])
+	var acts := HBoxContainer.new()
+	acts.add_theme_constant_override("separation", 12)
+	for a in [["practice", "Viaje de\npráctica", C_YELLOW], ["credits", "Créditos", Color("eef1f5")], ["reset", "Reiniciar\npartida", Color("fbe3ea")]]:
+		var b: TouchButton = trip._tb(a[0], a[1], Vector2(150, 100), a[2])
+		b.font_size = 22
+		b.shadow = Color("b58600") if a[2] == C_YELLOW else Color(0, 0, 0, 0)
+		if a[0] == "reset":
+			b.fg = Color("b0264f")
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		acts.add_child(b)
+	v.add_child(acts)
+	_msg(v)
+
+
+## Fila de configuración: nombre a la izquierda y los controles a la derecha
+func _set_row(v: VBoxContainer, title: String, controls: Array) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	var l: Label = trip._label(title, 24)
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(l)
+	for c in controls:
+		row.add_child(c)
+	v.add_child(row)
+
+
+func _choice(id: String, text: String, on: bool) -> TouchButton:
+	var b: TouchButton = trip._tb(id, text, Vector2(140, 64), C_YELLOW if on else Color("eef1f5"))
+	b.font_size = 22
+	b.radius = 999
+	b.shadow = Color("b58600") if on else Color(0, 0, 0, 0)
+	return b
+
+
+## Interruptor Sí/No
+func _toggle(id: String, on: bool) -> TouchButton:
+	var b: TouchButton = trip._tb(id, "Sí" if on else "No", Vector2(120, 64), Color("3fae5a") if on else Color("e3e7ed"))
+	b.fg = Color.WHITE if on else Color("5b6573")
+	b.font_size = 24
+	b.radius = 999
+	b.shadow = Color("2e7d32") if on else Color(0, 0, 0, 0)
+	return b
+
+
+## − barra +
+func _stepper(key: String) -> Array:
+	var r: Array = STEPS[key]
+	var val: float = Game.setting(key)
+	var minus: TouchButton = trip._tb("dec:" + key, "−", Vector2(64, 64), Color("eef1f5"))
+	var plus: TouchButton = trip._tb("inc:" + key, "+", Vector2(64, 64), Color("eef1f5"))
+	for b in [minus, plus]:
+		b.font_size = 34
+		b.radius = 999
+		b.shadow = Color(0, 0, 0, 0)
+	var m := Meter.new(18)
+	m.custom_minimum_size = Vector2(150, 18)
+	m.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	m.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	m.fill_color = C_YELLOW
+	m.fill = (val - r[0]) / (r[1] - r[0])
+	return [minus, m, plus]
+
+
+func _config_tap(id: String) -> void:
+	if id.begins_with("lang:"):
+		Game.set_setting("lang", id.substr(5))
+		render()
+		if id == "lang:en":
+			say("La traducción al inglés llega en la próxima actualización. Por ahora el juego sigue en español.")
+	elif id.begins_with("dec:") or id.begins_with("inc:"):
+		var key := id.substr(4)
+		var r: Array = STEPS[key]
+		var val: float = Game.setting(key)
+		val += r[2] if id.begins_with("inc:") else -r[2]
+		Game.set_setting(key, snappedf(clampf(val, r[0], r[1]), 0.01))
+		Audio.apply_settings()
+		render()
+		Audio.play("tap")
+	elif id == "tog:mute":
+		Audio.set_muted(not Audio.muted)
+		Game.save()
+		render()
+	elif id == "tog:tilt" or id == "tog:vibra":
+		var key := id.substr(4)
+		Game.set_setting(key, not Game.setting(key))
+		render()
+		if key == "vibra" and Game.setting("vibra"):
+			Game.vibrate(120)
+	elif id == "practice":
+		Game.start_practice()
+		trip.reset_trip()
+	elif id == "credits":
+		trip.show_modal("Créditos", "Voy en Bondi", CREDITS, [], [["modal_back", "VOLVER", 420, C_YELLOW]])
+	elif id == "reset":
+		trip.show_modal("Reiniciar partida", "¿Seguro?", "Se borran tus monedas, compras, mejoras y el avance de la historia. La configuración se mantiene.", [],
+			[["reset_ok", "SÍ, BORRAR", 260, Color("c2362b")], ["modal_back", "CANCELAR", 260, Color("eef1f5")]])
+	elif id == "reset_ok":
+		Game.reset_progress()
+		Audio.apply_settings()
+		trip.go_menu("menu")
 
 
 ## Chapita con el número de la línea, en su color
@@ -500,6 +623,8 @@ func tap(id: String) -> void:
 	elif id.begins_with("tab:"):
 		skins_tab = id.substr(4)
 		render()
+	elif current == "config" or id == "reset_ok":
+		_config_tap(id)
 	elif id.begins_with("buy:"):
 		var item := id.substr(4)
 		if Game.buy_item(item):

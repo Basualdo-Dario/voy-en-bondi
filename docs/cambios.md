@@ -4,6 +4,7 @@ Cada cambio del juego, del más nuevo al más viejo. El detalle completo y la fo
 
 ## 2026-10-13
 
+- **Configuración (engranaje arriba a la izquierda del menú):** idioma (español; el inglés llega en la próxima actualización), volumen de música y de efectos por separado, sonido prendido/apagado, control inclinando el celular (prender/apagar y sensibilidad), vibración (al caerte, en frenadas y robos), viaje de práctica con todos los tutoriales que no cuenta para tu partida, créditos y reiniciar partida (con cartel de confirmación). El botón de sonido del menú pasó adentro de configuración; en la pausa sigue estando.
 - **Choro con tiempo:** el forcejeo dura como máximo 5 segundos (con cuenta regresiva). Si no llevás la barra a tu zona verde a tiempo, te roba.
 - **Música cumbia villera:** nueva canción de 38 segundos con teclado berreta con vibrato, guacharaca al frente, timbales con redobles, cencerro y bajo. Dos partes para que no sea tan repetitiva.
 - **Murmullo de gente:** se sacó el balbuceo de los personajes (sonaba robótico) y en su lugar suena de fondo, durante el viaje, una grabación real de gente hablando bajito.
